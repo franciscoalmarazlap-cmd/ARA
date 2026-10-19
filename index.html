@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circuitos Judiciales y Simulador de Amparo MX</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<style>
+:root{--bg:#140A1F;--bg2:#07030D;--cy:#FF5CA8;--vi:#5B8CFF;--ok:#7CFF4F;--er:#FF4B4B;--wa:#FFA53A;--go:#FFD93D;--tx:#ffe9f4;--mut:#c9a3bd}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 15%,#2a1240 0%,var(--bg) 42%,var(--bg2) 100%) fixed;color:var(--tx);font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;overflow-x:hidden}
+h1,h2,h3,h4,p{margin:0}
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+header#top{position:fixed;top:0;left:0;right:0;height:64px;z-index:60;display:flex;align-items:center;gap:12px;padding:0 14px;background:rgba(14,6,24,.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,92,168,.35);box-shadow:0 0 26px rgba(255,92,168,.18)}
+.neon{color:#fff;text-shadow:0 0 6px var(--cy),0 0 18px var(--cy),0 0 36px var(--vi);letter-spacing:.08em;font-weight:800}
+#brand{font-size:19px;white-space:nowrap}
+#status{display:flex;align-items:center;gap:10px;margin-left:auto;font-size:12px}
+.pill{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,92,168,.3);background:rgba(36,14,52,.7);white-space:nowrap}
+.xpbar{width:90px;height:6px;border-radius:9px;background:#2a1240;overflow:hidden}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cy),var(--vi));box-shadow:0 0 8px var(--cy);transition:width .5s}
+aside#side{position:fixed;top:64px;bottom:0;left:0;width:230px;z-index:50;padding:12px 10px;background:rgba(14,6,24,.78);backdrop-filter:blur(14px);border-right:1px solid rgba(91,140,255,.35);transition:width .3s;display:flex;flex-direction:column;gap:6px;overflow-x:hidden;overflow-y:auto}
+.navbtn{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--tx);cursor:pointer;font-size:14px;text-align:left;transition:.25s;white-space:nowrap;width:100%}
+.navbtn i{width:24px;text-align:center;font-size:18px;color:var(--cy)}
+.navbtn:hover{background:rgba(255,92,168,.08);border-color:rgba(255,92,168,.4);box-shadow:0 0 14px rgba(255,92,168,.25)}
+.navbtn.on{background:linear-gradient(90deg,rgba(255,92,168,.2),rgba(91,140,255,.2));border-color:var(--cy);box-shadow:0 0 18px rgba(255,92,168,.35)}
+body.collapsed aside#side{width:66px}
+body.collapsed .navbtn span{display:none}
+main#main{position:relative;z-index:2;margin:64px 0 0 230px;padding:20px;transition:margin .3s;min-height:calc(100vh - 64px)}
+body.collapsed main#main{margin-left:66px}
+@media(max-width:820px){aside#side{width:66px}.navbtn span{display:none}main#main{margin-left:66px;padding:12px}#brand{font-size:14px}.xpbar,.hide-sm{display:none}}
+.mod{display:none;animation:fade .4s}.mod.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.glass{background:linear-gradient(145deg,rgba(52,22,72,.62),rgba(24,10,38,.55));backdrop-filter:blur(14px);border:1px solid rgba(255,92,168,.25);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 0 0 1px rgba(91,140,255,.12);transition:border-color .3s,box-shadow .3s}
+.glass:hover{border-color:rgba(255,92,168,.55);box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 22px rgba(255,92,168,.22)}
+.p{padding:16px}
+.glass,.col{min-width:0}
+.h2{font-size:22px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.h2 i{color:var(--cy);text-shadow:0 0 12px var(--cy)}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;border:1px solid var(--vi);color:#cfdcff}
+.mut{color:var(--mut)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:11px;border:1px solid var(--cy);background:rgba(255,92,168,.08);color:#fff;cursor:pointer;font-weight:600;font-size:14px;transition:.22s;text-decoration:none}
+.btn:hover{background:rgba(255,92,168,.25);box-shadow:0 0 18px rgba(255,92,168,.5);transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-gold{border-color:var(--go);background:rgba(255,217,61,.1);color:var(--go)}.btn-gold:hover{background:rgba(255,217,61,.25);box-shadow:0 0 18px rgba(255,217,61,.55)}
+.btn-ok{border-color:var(--ok);background:rgba(124,255,79,.1);color:var(--ok)}
+.btn-er{border-color:var(--er);background:rgba(255,75,75,.1);color:var(--er)}
+.btn-vi{border-color:var(--vi);background:rgba(91,140,255,.18)}
+.btn-big{padding:12px 22px;font-size:15px}
+.ibtn{width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,92,168,.35);background:rgba(36,14,52,.7);color:var(--cy);cursor:pointer;transition:.2s}.ibtn:hover{box-shadow:0 0 14px var(--cy)}.ibtn.off{color:#556;border-color:#334}
+.inp{width:100%;max-width:100%;min-width:0;margin-top:4px;padding:9px 11px;border-radius:10px;border:1px solid rgba(255,92,168,.3);background:rgba(20,8,32,.7);color:var(--tx);font:inherit;outline:none;transition:.2s}
+.inp:focus{border-color:var(--cy);box-shadow:0 0 14px rgba(255,92,168,.35)}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:8px}
+select.inp option{background:#1c0c2c}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:1100px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media(max-width:600px){.row2{grid-template-columns:minmax(0,1fr)}}
+.flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.stage-host{position:relative;width:100%;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at center,#2a1240,#07030D)}
+#stageWrap{position:absolute;inset:0;background:radial-gradient(ellipse at center,#2a1240,#07030D)}
+#stageWrap canvas{display:block;width:100%;height:100%;outline:none}
+
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,92,168,.35);font-size:12px;background:rgba(255,92,168,.06);cursor:pointer;transition:.2s;color:var(--tx)}
+.chip:hover{background:rgba(255,92,168,.22)}.chip.on{background:rgba(255,92,168,.3);box-shadow:0 0 10px rgba(255,92,168,.5)}
+.chip.off{opacity:.35;cursor:default}
+.badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:12px;font-weight:800;letter-spacing:.04em}
+.b-ok{background:rgba(124,255,79,.15);color:var(--ok);border:1px solid var(--ok)}
+.b-er{background:rgba(255,75,75,.15);color:var(--er);border:1px solid var(--er)}
+.b-wa{background:rgba(255,165,58,.15);color:var(--wa);border:1px solid var(--wa)}
+.b-vi{background:rgba(91,140,255,.25);color:#cfdcff;border:1px solid var(--vi)}
+.b-go{background:rgba(255,217,61,.15);color:var(--go);border:1px solid var(--go)}
+.b-cy{background:rgba(255,92,168,.12);color:var(--cy);border:1px solid var(--cy)}
+.bar{height:9px;border-radius:9px;background:#2a1240;overflow:hidden}.bar i{display:block;height:100%;border-radius:9px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid rgba(255,92,168,.15);text-align:left;vertical-align:top}
+.tbl th{color:var(--cy);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.tbl tr:hover td{background:rgba(255,92,168,.05)}
+.toasts,#toasts{position:fixed;right:14px;bottom:14px;z-index:200;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{padding:10px 14px;border-radius:12px;background:rgba(24,10,38,.95);border:1px solid var(--cy);box-shadow:0 0 18px rgba(255,92,168,.4);font-size:13px;animation:tin .35s;max-width:320px}
+.toast.go{border-color:var(--go);box-shadow:0 0 18px rgba(255,217,61,.45)}.toast.er{border-color:var(--er)}.toast.ok{border-color:var(--ok)}
+.toast.out{opacity:0;transform:translateX(30px);transition:.4s}
+@keyframes tin{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+
+.hero{padding:28px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(24px,4vw,40px)}
+.stat{padding:14px;text-align:center}.stat b{display:block;font-size:26px;color:var(--cy);text-shadow:0 0 12px var(--cy)}.stat small{color:var(--mut)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin:16px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.tile{padding:18px;cursor:pointer}.tile i{font-size:28px;margin-bottom:10px;display:block}.tile h3{font-size:16px;margin-bottom:6px}.tile p{font-size:13px;color:var(--mut)}
+.tile:hover{transform:translateY(-4px)}
+
+.m1wrap{position:relative}
+#ficha{position:absolute;top:12px;right:12px;width:350px;max-height:calc(100% - 24px);overflow:auto;z-index:5;padding:14px;transform-style:preserve-3d;transition:transform .15s;background:linear-gradient(145deg,rgba(50,14,60,.82),rgba(20,8,34,.82));border-color:rgba(91,140,255,.7);box-shadow:0 20px 50px rgba(0,0,0,.6),0 0 30px rgba(91,140,255,.4)}
+@media(max-width:900px){#ficha{position:static;width:auto;margin-top:12px}}
+.hexn{display:inline-flex;width:54px;height:54px;align-items:center;justify-content:center;font-weight:900;font-size:20px;clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0 50%);background:linear-gradient(135deg,var(--vi),var(--cy));color:#fff}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:12.5px;margin:10px 0}.kv b{color:var(--cy);font-weight:600}
+.org{padding:8px;border:1px solid rgba(255,92,168,.25);border-radius:10px;margin-top:6px;font-size:12px;background:rgba(0,0,0,.25)}
+.hx{fill:rgba(15,59,102,.85);stroke:var(--cy);stroke-width:1.5;cursor:pointer;transition:.2s}.hx:hover{fill:rgba(255,92,168,.4)}
+.hx.sel{fill:rgba(91,140,255,.8);stroke:#fff}.hx.cq{fill:rgba(124,255,79,.5);stroke:var(--ok)}
+#svgMap text{fill:#fff;font-size:13px;font-weight:700;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.chips{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow:auto}
+
+.gtab{padding:8px 12px;border-radius:10px;border:1px solid rgba(91,140,255,.5);background:rgba(91,140,255,.12);color:var(--tx);cursor:pointer;font-size:13px;transition:.2s}
+.gtab.on{background:linear-gradient(90deg,rgba(255,92,168,.3),rgba(91,140,255,.35));border-color:var(--cy);box-shadow:0 0 14px rgba(255,92,168,.4)}
+.opt{display:block;width:100%;text-align:left;padding:11px 13px;margin-top:8px;border-radius:11px;border:1px solid rgba(255,92,168,.3);background:rgba(255,92,168,.05);color:var(--tx);cursor:pointer;font:inherit;font-size:14px;transition:.2s}
+.opt:hover:not(:disabled){background:rgba(255,92,168,.2);transform:translateX(3px)}
+.opt.good{border-color:var(--ok);background:rgba(124,255,79,.18)}.opt.bad{border-color:var(--er);background:rgba(255,75,75,.18)}
+.pz{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-top:6px;border-radius:10px;border:1px solid rgba(255,92,168,.3);background:rgba(255,92,168,.05);cursor:grab;font-size:13px;transition:.15s}
+.pz.over{border-color:var(--go);box-shadow:0 0 12px var(--go)}.pz.good{border-color:var(--ok);background:rgba(124,255,79,.14)}.pz.bad{border-color:var(--er);background:rgba(255,75,75,.14)}
+.pz .h{color:var(--mut);cursor:grab}
+.card{padding:9px 11px;margin-top:6px;border-radius:10px;border:1px dashed rgba(255,217,61,.5);background:rgba(255,217,61,.05);cursor:pointer;font-size:13px;transition:.2s}
+.card:hover{background:rgba(255,217,61,.15)}.card.used{border-style:solid;border-color:var(--ok);background:rgba(124,255,79,.12)}
+.quote{padding:12px;border-left:3px solid var(--cy);background:rgba(0,0,0,.3);border-radius:8px;font-size:13.5px;line-height:1.55}
+.prem{padding:10px 12px;border-radius:10px;margin-top:8px;font-size:13px;line-height:1.5;background:rgba(0,0,0,.28)}
+.resol{font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.6;padding:12px;border:1px solid rgba(255,217,61,.45);border-radius:10px;background:rgba(255,217,61,.05)}
+.sig{display:flex;gap:8px;font-size:12.5px;margin:3px 0}.sig i{width:16px}
+
+.dayb{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;padding:5px 4px;border-radius:8px;font-size:11px;margin:2px;border:1px solid}
+.dayb.c{border-color:var(--ok);background:rgba(124,255,79,.12)}.dayb.s{border-color:rgba(255,75,75,.6);background:rgba(255,75,75,.1);color:#ff9bb2}.dayb.v{border-color:var(--go);background:rgba(255,217,61,.25);box-shadow:0 0 12px var(--go)}
+
+#reportDoc{overflow-x:auto;background:#fff;color:#111;padding:28px;border-radius:10px;font-family:Georgia,serif;font-size:13px;line-height:1.45}
+#reportDoc h1{font-size:22px;color:#0a2a55;border-bottom:3px solid #0a2a55;padding-bottom:6px}#reportDoc h2{font-size:15px;color:#0a2a55;margin:16px 0 6px}
+#reportDoc table{width:100%;border-collapse:collapse;margin-bottom:6px}#reportDoc th,#reportDoc td{border:1px solid #888;padding:4px 7px;font-size:12px;text-align:left;vertical-align:top}#reportDoc th{background:#e6eefc}
+@media print{
+ body{background:#fff!important}
+ body *{visibility:hidden}
+ #reportDoc,#reportDoc *{visibility:visible}
+ #reportDoc{position:absolute;left:0;top:0;width:100%;padding:0}
+}
+.stage-tb{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:3}
+.bgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:10px 0 16px}
+.bdg{padding:12px;text-align:center;opacity:.35;filter:grayscale(.8);transition:.3s}
+.bdg.on{opacity:1;filter:none;border-color:var(--go);box-shadow:0 0 16px rgba(255,217,61,.35)}
+.bdg i{font-size:24px;color:var(--go);display:block;margin-bottom:6px}
+.bdg b{display:block;font-size:13px}.bdg small{color:var(--mut);font-size:11.5px}
+.gl{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.fc{perspective:900px;height:170px;cursor:pointer}
+.fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.fc.flip .fci{transform:rotateY(180deg)}
+.ff,.fb{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;padding:14px;display:flex;flex-direction:column;border:1px solid rgba(255,92,168,.4);background:linear-gradient(145deg,rgba(52,22,72,.92),rgba(24,10,38,.92))}
+.ff{align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:16px;gap:6px}
+.fb{transform:rotateY(180deg);font-size:12.5px;line-height:1.45;overflow:auto}
+.fc.known .ff{border-color:var(--ok);box-shadow:0 0 12px rgba(124,255,79,.4)}
+details.st{margin-top:8px;border:1px solid rgba(255,92,168,.3);border-radius:12px;background:rgba(0,0,0,.25);padding:10px 12px}
+details.st summary{cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;list-style:none}
+details.st summary::-webkit-details-marker{display:none}
+details.st[open]{border-color:var(--cy)}
+details.st p{margin-top:10px;font-size:13.5px;line-height:1.55}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<header id="top">
+  <button class="ibtn" id="colBtn" title="Colapsar menú"><i class="fa-solid fa-bars"></i></button>
+  <div id="brand" class="neon"><i class="fa-solid fa-scale-balanced"></i> <span class="hide-sm">Simulador de Amparo MX</span></div>
+  <div id="status">
+    <div class="pill" title="Nivel de Juez"><i class="fa-solid fa-gavel" style="color:var(--go)"></i><span id="stLvl">Pasante</span></div>
+    <div class="pill hide-sm" title="Experiencia"><i class="fa-solid fa-bolt" style="color:var(--cy)"></i><span id="stXp">0 XP</span><div class="xpbar"><i id="stBar" style="width:0%"></i></div></div>
+    <div class="pill" title="Racha de días"><i class="fa-solid fa-fire" style="color:var(--wa)"></i><span id="stStreak">1</span></div>
+    <button class="ibtn" id="sfxBtn" title="Audio"><i class="fa-solid fa-volume-high"></i></button>
+    <button class="ibtn" id="fxBtn" title="Efectos visuales"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+    <a class="btn btn-gold" target="_blank" rel="noopener" href="https://www.oaj.gob.mx/micrositios/dggj/paginas/serviciosTramites.htm?pageName=servicios%2Fexpedientes.htm"><i class="fa-solid fa-landmark"></i><span class="hide-sm">Acceso Oficial DGGJ</span></a>
+  </div>
+</header>
+
+<aside id="side"></aside>
+
+<main id="main">
+
+<section class="mod on" id="mod-home">
+  <div class="glass hero">
+    <h1 class="neon">Circuitos Judiciales y Simulador de Amparo MX</h1>
+    <p style="margin:8px 0 14px;max-width:760px" class="mut">Explora los 32 circuitos judiciales en un mapa 3D, analiza conceptos de violación, practica con juegos y genera tu reporte académico.</p>
+    <div class="flex"><button class="btn btn-big" data-go="m1"><i class="fa-solid fa-play"></i> Comenzar a explorar</button><button class="btn btn-big btn-vi" data-go="m2"><i class="fa-solid fa-robot"></i> Analizar un amparo</button></div>
+  </div>
+  <div class="stats" id="homeStats"></div>
+  <div class="tiles" id="homeTiles"></div>
+  <h3 style="margin:6px 0;color:var(--cy)">Insignias</h3><div class="bgs" id="homeBadges"></div>
+  <div class="glass p flex" style="margin-bottom:14px"><button class="btn" id="hExp"><i class="fa-solid fa-file-export"></i> Exportar progreso</button><button class="btn" id="hImp"><i class="fa-solid fa-file-import"></i> Importar progreso</button><input type="file" id="hFile" accept=".json,application/json" style="display:none"><button class="btn btn-er" id="hRst"><i class="fa-solid fa-trash"></i> Reiniciar progreso</button></div>
+  <div class="glass p" style="font-size:12.5px;color:var(--mut);line-height:1.55"><i class="fa-solid fa-circle-info" style="color:var(--wa)"></i> <b style="color:var(--tx)">Aviso académico.</b> Esta plataforma es una herramienta didáctica y su "IA" es un motor simulado de reglas. Los datos de sedes, plazos y fundamentos son referenciales: verifica siempre el texto vigente de la Ley de Amparo, los acuerdos del Órgano de Administración Judicial y los catálogos oficiales de la DGGJ (botón dorado superior). No constituye asesoría jurídica.</div>
+</section>
+
+<section class="mod" id="mod-m1">
+  <h2 class="h2"><i class="fa-solid fa-map-location-dot"></i> Explorador de los 32 Circuitos Judiciales <span class="tag">Mapa esquemático 3D / SVG</span></h2>
+  <div class="flex" style="margin-bottom:10px">
+    <button class="gtab on" id="v3d"><i class="fa-solid fa-cube"></i> Mapa 3D</button>
+    <button class="gtab" id="vsvg"><i class="fa-solid fa-draw-polygon"></i> Mapa SVG</button>
+    <input class="inp" id="m1Search" placeholder="Buscar circuito, estado o sede..." style="max-width:300px;margin:0">
+  </div>
+  <div class="m1wrap">
+    <div id="m1stage" class="glass" style="padding:6px"><div class="stage-host" id="host-m1" style="height:520px"></div></div>
+    <div id="m1svg" class="glass p" style="display:none"><div id="svgMap"></div></div>
+    <div id="ficha" class="glass"><div class="mut" style="font-size:13px"><i class="fa-solid fa-landmark" style="color:var(--cy)"></i> Ficha técnica del circuito</div></div>
+  </div>
+  <div class="glass p" style="margin-top:14px"><div class="chips" id="m1chips" style="max-height:none"></div></div>
+</section>
+
+<section class="mod" id="mod-m2">
+  <h2 class="h2"><i class="fa-solid fa-robot"></i> Asistente de IA de Amparo <span class="tag">Motor semántico simulado</span></h2>
+  <div class="grid2">
+    <div class="col">
+      <div class="glass p">
+        <div class="row2"><label>Quejoso<input id="qName" class="inp" placeholder="Nombre del quejoso"></label><label>Autoridad responsable<input id="qAuth" class="inp" placeholder="Ej. Sala Civil del Tribunal Superior"></label></div>
+        <label>Acto reclamado (opcional)<input id="qAct" class="inp" placeholder="Ej. La sentencia definitiva de fecha..."></label>
+        <label>Concepto de violación / fragmento de sentencia<textarea id="qText" class="inp" rows="8" placeholder="Escribe o pega aquí el concepto de violación..."></textarea></label>
+        <div class="flex" style="margin-bottom:10px"><span class="mut" style="font-size:12px">Ejemplos:</span>
+          <button class="chip" data-s="0">Fundado</button><button class="chip" data-s="1">Inoperante</button><button class="chip" data-s="2">Ineficaz</button><button class="chip" data-s="3">Infundado</button></div>
+        <div class="flex"><button id="qGo" class="btn btn-big"><i class="fa-solid fa-microchip"></i> Analizar</button><button id="qClear" class="btn btn-big btn-vi"><i class="fa-solid fa-eraser"></i> Limpiar</button></div>
+      </div>
+      <div class="glass p" id="qHist"></div>
+      <div class="glass p"><div class="stage-host" id="host-m2" style="height:380px"></div><div class="flex" style="margin-top:10px"><button id="qGavel" class="btn btn-gold"><i class="fa-solid fa-gavel"></i> Dictar sentencia (mazo 3D)</button></div></div>
+    </div>
+    <div class="col" id="qOut"><div class="glass p mut">Los resultados del análisis aparecerán aquí.</div></div>
+  </div>
+</section>
+
+<section class="mod" id="mod-m3">
+  <h2 class="h2"><i class="fa-solid fa-gamepad"></i> Arena de Gamificación <span class="tag">6 modos</span></h2>
+  <div class="flex" id="gTabs" style="margin-bottom:12px"></div>
+  <div class="grid2" id="gGrid">
+    <div class="glass p" id="m3Stage"><div class="stage-host" id="host-m3" style="height:440px"></div></div>
+    <div class="col" id="gameArea"></div>
+  </div>
+</section>
+
+<section class="mod" id="mod-m4">
+  <h2 class="h2"><i class="fa-solid fa-calendar-days"></i> Plazos Procesales y Matriz Comparativa</h2>
+  <div class="grid2">
+    <div class="glass p">
+      <h3 style="margin-bottom:10px;color:var(--cy)">Calculadora de términos</h3>
+      <div class="row2"><label>Fecha de notificación<input type="date" id="cDate" class="inp"></label>
+        <label>Plazo<select id="cTerm" class="inp">
+          <option value="15">15 días hábiles (general)</option>
+          <option value="30">30 días hábiles (norma autoaplicativa / extradición)</option>
+          <option value="8">8 días hábiles (plazo especial)</option>
+          <option value="10">10 días hábiles (recurso de revisión)</option>
+          <option value="5">5 días hábiles (queja, regla general)</option>
+          <option value="3">3 días hábiles (reclamación)</option>
+          <option value="8a">8 años naturales (sentencia condenatoria con prisión)</option>
+        </select></label></div>
+      <div class="row2"><label>La notificación surte efectos<select id="cEff" class="inp"><option value="0">El mismo día</option><option value="1">Al día siguiente</option></select></label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:22px"><input type="checkbox" id="cVac" checked> Excluir periodos vacacionales del PJF (16–31 jul y 16–31 dic)</label></div>
+      <div class="flex" style="margin-bottom:8px"><input type="date" id="cExtra" class="inp" style="max-width:190px;margin:0"><button class="btn" id="cAddEx"><i class="fa-solid fa-plus"></i> Día inhábil adicional</button><span id="cExList" class="flex"></span></div>
+      <button class="btn btn-big" id="cGo"><i class="fa-solid fa-calculator"></i> Calcular vencimiento</button>
+      <div id="cOut" style="margin-top:14px"></div>
+    </div>
+    <div class="glass p">
+      <h3 style="margin-bottom:10px;color:var(--cy)">Amparo Directo vs. Indirecto</h3>
+      <div class="flex" id="mxChips" style="margin-bottom:8px"></div>
+      <input class="inp" id="mxSearch" placeholder="Filtrar por palabra clave..." style="margin:0 0 10px">
+      <div style="overflow:auto"><table class="tbl" id="mxTbl"></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="mod-m6">
+  <h2 class="h2"><i class="fa-solid fa-book-open"></i> Glosario y Tarjetas de Estudio</h2>
+  <div class="glass p" style="margin-bottom:14px">
+    <div class="flex"><input class="inp" id="glSearch" placeholder="Buscar término..." style="max-width:320px;margin:0"><button class="btn" id="glRand"><i class="fa-solid fa-shuffle"></i> Tarjeta al azar</button><span id="glProgT" class="mut" style="font-size:13px"></span></div>
+    <div class="bar" style="margin:10px 0"><i id="glBar" style="width:0%;background:var(--ok)"></i></div>
+    <div class="flex" id="glChips"></div>
+  </div>
+  <div class="gl" id="glGrid"></div>
+</section>
+
+<section class="mod" id="mod-m7">
+  <h2 class="h2"><i class="fa-solid fa-diagram-project"></i> Etapas del Juicio de Amparo</h2>
+  <div class="glass p">
+    <div class="flex" style="margin-bottom:12px"><span class="chip on" data-v="ind">Amparo indirecto</span><span class="chip" data-v="dir">Amparo directo</span><button class="btn" id="prAll"><i class="fa-solid fa-angles-down"></i> Expandir todo</button><button class="btn" id="prNone"><i class="fa-solid fa-angles-up"></i> Contraer todo</button></div>
+    <div id="prList"></div>
+    <p class="mut" style="font-size:11.5px;margin-top:10px">Plazos referenciales: confirma los artículos y términos vigentes en la Ley de Amparo.</p>
+  </div>
+</section>
+
+<section class="mod" id="mod-m5">
+  <h2 class="h2"><i class="fa-solid fa-file-pdf"></i> Reporte Académico (Ficha Técnica Legal)</h2>
+  <div class="glass p" style="margin-bottom:14px">
+    <div class="row2" style="grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr))">
+      <label>Nombre del alumno<input id="rName" class="inp"></label><label>Materia<input id="rSub" class="inp"></label><label>Grupo<input id="rGrp" class="inp"></label><label>Docente<input id="rTch" class="inp"></label></div>
+    <div class="flex"><button class="btn btn-big" id="rGen"><i class="fa-solid fa-rotate"></i> Generar / actualizar</button><button class="btn btn-big btn-gold" id="rPrint"><i class="fa-solid fa-print"></i> Imprimir / Guardar PDF</button><button class="btn btn-big btn-vi" id="rDl"><i class="fa-solid fa-download"></i> Descargar HTML</button></div>
+    
+  </div>
+  <div id="reportDoc"></div>
+</section>
+
+</main>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const pad=n=>String(n).padStart(2,'0');
+const dkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseD=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const fmtD=d=>d.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const ORD=['','Primer','Segundo','Tercer','Cuarto','Quinto','Sexto','Séptimo','Octavo','Noveno','Décimo','Décimo Primer','Décimo Segundo','Décimo Tercer','Décimo Cuarto','Décimo Quinto','Décimo Sexto','Décimo Séptimo','Décimo Octavo','Décimo Noveno','Vigésimo','Vigésimo Primer','Vigésimo Segundo','Vigésimo Tercer','Vigésimo Cuarto','Vigésimo Quinto','Vigésimo Sexto','Vigésimo Séptimo','Vigésimo Octavo','Vigésimo Noveno','Trigésimo','Trigésimo Primer','Trigésimo Segundo'];
+const DGGJ='https://www.oaj.gob.mx/micrositios/dggj/paginas/serviciosTramites.htm?pageName=servicios%2Fexpedientes.htm';
+
+const KEY='amparo_simulador_v1';
+const fresh=()=>({xp:0,streak:1,last:'',explored:[],cases:[],scores:{speed:0,juez:0,puzzle:0,lab:0,trivia:0,exam:0},conq:[],calc:[],fx:true,sfx:true,stu:{n:'',m:'',g:'',d:''},extra:[],learned:[],learnedEver:[],labSolved:[],badges:[]});
+const S=fresh();
+const ints=(a,max)=>Array.isArray(a)?[...new Set(a.filter(x=>Number.isInteger(x)&&x>=0&&x<=max))]:[];
+function applyState(o){
+ const f=fresh();if(!o||typeof o!=='object')o={};
+ if(Number.isFinite(o.xp)&&o.xp>=0)f.xp=Math.floor(o.xp);
+ if(Number.isFinite(o.streak)&&o.streak>=1)f.streak=Math.floor(o.streak);
+ if(typeof o.last==='string')f.last=o.last;
+ f.explored=ints(o.explored,32).filter(n=>n>=1);
+ f.conq=ints(o.conq,32).filter(n=>n>=1);
+ f.learned=ints(o.learned,GLOS.length-1);
+ f.learnedEver=ints(o.learnedEver,GLOS.length-1);
+ f.labSolved=ints(o.labSolved,LAB.length-1);
+ f.badges=Array.isArray(o.badges)?o.badges.filter(b=>typeof b==='string'):[];
+ f.extra=Array.isArray(o.extra)?o.extra.filter(d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)):[];
+ f.cases=Array.isArray(o.cases)?o.cases.filter(c=>c&&typeof c.t==='string').map(c=>({t:c.t,full:typeof c.full==='string'?c.full:c.t,q:String(c.q||''),au:String(c.au||''),act:String(c.act||''),viol:String(c.viol||''),grade:String(c.grade||''),conf:Number(c.conf)||0,fund:!!c.fund})).slice(-60):[];
+ f.calc=Array.isArray(o.calc)?o.calc.filter(c=>c&&typeof c.n==='string'&&typeof c.p==='string'&&typeof c.v==='string').slice(-12):[];
+ if(o.scores&&typeof o.scores==='object')Object.keys(f.scores).forEach(k=>{if(Number.isFinite(o.scores[k])&&o.scores[k]>=0)f.scores[k]=o.scores[k]});
+ if(typeof o.fx==='boolean')f.fx=o.fx;
+ if(typeof o.sfx==='boolean')f.sfx=o.sfx;
+ if(o.stu&&typeof o.stu==='object')Object.keys(f.stu).forEach(k=>{if(typeof o.stu[k]==='string')f.stu[k]=o.stu[k].slice(0,120)});
+ Object.keys(f).forEach(k=>{S[k]=f[k]});
+}
+function load(){try{applyState(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function touchStreak(){const t=dkey(new Date());if(S.last===t)return;const y=new Date();y.setDate(y.getDate()-1);S.streak=(S.last===dkey(y))?S.streak+1:1;S.last=t;save()}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600)}
+function copyText(t){
+ const ok=()=>toast('Copiado al portapapeles','ok');
+ const fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')?ok():toast('No se pudo copiar','er')}catch(e){toast('No se pudo copiar','er')}a.remove()};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb();
+}
+const LEVELS=[[0,'Pasante'],[100,'Secretario Proyectista'],[250,'Secretario de Juzgado'],[500,'Juez de Distrito'],[900,'Magistrado de Circuito'],[1500,'Ministro de la SCJN']];
+function lvl(){let i=0;LEVELS.forEach((l,k)=>{if(S.xp>=l[0])i=k});const nx=LEVELS[i+1];return{i,name:LEVELS[i][1],base:LEVELS[i][0],next:nx?nx[0]:null}}
+function renderStatus(){const L=lvl();$('#stLvl').textContent=L.name;$('#stXp').textContent=S.xp+' XP';$('#stStreak').textContent=S.streak;const pct=L.next?Math.min(100,(S.xp-L.base)/(L.next-L.base)*100):100;$('#stBar').style.width=pct+'%'}
+function toast(msg,k=''){const t=document.createElement('div');t.className='toast '+k;t.innerHTML=msg;$('#toasts').appendChild(t);setTimeout(()=>t.classList.add('out'),2600);setTimeout(()=>t.remove(),3100)}
+function fx(o){if(S.fx&&window.confetti)window.confetti(Object.assign({colors:['#FF5CA8','#5B8CFF','#7CFF4F','#FFD93D','#FF4B4B'],zIndex:300},o))}
+function addXP(n,why){const b=lvl().i;S.xp+=n;save();renderStatus();toast('<i class="fa-solid fa-bolt"></i> +'+n+' XP · '+esc(why),'go');if(lvl().i>b){fx({particleCount:180,spread:100,origin:{y:.3}});SFX.level();toast('<i class="fa-solid fa-trophy"></i> ¡Nuevo rango: <b>'+lvl().name+'</b>!','go')}checkBadges()}
+const BADGES=[
+ ['b1','fa-compass','Primer paso','Explora tu primer circuito',()=>S.explored.length>=1],
+ ['b2','fa-map','Cartógrafo','Explora 16 circuitos',()=>S.explored.length>=16],
+ ['b3','fa-globe','Geógrafo judicial','Explora los 32 circuitos',()=>S.explored.length>=32],
+ ['b4','fa-microscope','Analista','Analiza 3 casos con la IA',()=>S.cases.length>=3],
+ ['b5','fa-scale-balanced','Juez en funciones','Analiza 10 casos',()=>S.cases.length>=10],
+ ['b6','fa-stopwatch','Rayo constitucional','300 puntos en el speedrun',()=>S.scores.speed>=300],
+ ['b7','fa-flag','Conquistador','Conquista 16 circuitos',()=>S.conq.length>=16],
+ ['b8','fa-puzzle-piece','Maestro del orden','100 puntos en el rompecabezas',()=>S.scores.puzzle>=100],
+ ['b9','fa-flask','Alquimista','Convierte un agravio en fundado',()=>S.labSolved.length>=1],
+ ['b10','fa-graduation-cap','Examen aprobado','8 de 10 en el examen final',()=>S.scores.exam>=8],
+ ['b11','fa-fire','Constante','Racha de 3 días',()=>S.streak>=3],
+ ['b12','fa-book','Erudito','Aprende 20 términos del glosario',()=>S.learned.length>=20],
+ ['b13','fa-crown','Magistrado','Alcanza el rango Magistrado de Circuito',()=>lvl().i>=4]
+];
+function checkBadges(){
+ let nw=false;
+ BADGES.forEach(b=>{if(S.badges.indexOf(b[0])<0&&b[4]()){S.badges.push(b[0]);nw=true;toast('<i class="fa-solid '+b[1]+'"></i> Insignia: <b>'+esc(b[2])+'</b>','go')}});
+ if(nw){save();if(curMod==='home')renderHome()}
+}
+
+let ac=null;
+function AC(){try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac}catch(e){return null}}
+function tone(f,d=.12,type='sine',v=.05,when=0){if(!S.sfx)return;const a=AC();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;const t=a.currentTime+when;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.02)}
+const SFX={click:()=>tone(620,.05,'square',.025),ok:()=>{tone(520,.12);tone(780,.18,'sine',.05,.1)},err:()=>tone(150,.3,'sawtooth',.05),level:()=>[523,659,784,1046].forEach((f,i)=>tone(f,.2,'triangle',.06,i*.1)),
+ gavel:()=>{if(!S.sfx)return;const a=AC();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.frequency.setValueAtTime(140,a.currentTime);o.frequency.exponentialRampToValueAtTime(40,a.currentTime+.25);g.gain.setValueAtTime(.35,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.3);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.32);
+  const n=a.createBuffer(1,a.sampleRate*.08,a.sampleRate),dt=n.getChannelData(0);for(let i=0;i<dt.length;i++)dt[i]=(Math.random()*2-1)*(1-i/dt.length);const s=a.createBufferSource(),g2=a.createGain();s.buffer=n;g2.gain.value=.25;s.connect(g2);g2.connect(a.destination);s.start()},
+ tick:()=>tone(900,.03,'square',.02)};
+
+const C=[
+[1,'Ciudad de México','Ciudad de México','Complejos judiciales de la capital (San Lázaro, Insurgentes Sur, Reclusorios)',-99.1,19.35,'Centro','Control constitucional de actos de autoridades federales; competencia económica y telecomunicaciones (órganos especializados con alcance nacional).'],
+[2,'Estado de México','Toluca','Naucalpan de Juárez, Nezahualcóyotl',-99.95,19.9,'Centro','Violencia de género y feminicidio vistos desde el amparo penal.'],
+[3,'Jalisco','Guadalajara','Zapopan, Puerto Vallarta',-103.3,20.7,'Occidente','Derecho a la salud y a un medio ambiente sano (amparos ambientales).'],
+[4,'Nuevo León','Monterrey','Apodaca, San Pedro Garza García',-100.3,25.7,'Noreste','Amparo mercantil de alta cuantía y derechos laborales en la industria.'],
+[5,'Sonora','Hermosillo','Ciudad Obregón, Nogales, San Luis Río Colorado',-110.9,29.1,'Noroeste','Consulta previa a pueblos indígenas y derecho al agua (caso de la Tribu Yaqui y el Acueducto Independencia).'],
+[6,'Puebla','Puebla','San Andrés Cholula, Tehuacán',-98.2,19.0,'Centro','Derechos de comunidades frente a megaproyectos; amparo agrario.'],
+[7,'Veracruz','Boca del Río','Xalapa, Coatzacoalcos, Córdoba',-96.4,19.3,'Golfo','Derecho marítimo-portuario y aduanero; amparo contra contribuciones.'],
+[8,'Coahuila','Saltillo','Torreón, Piedras Negras, Monclova',-101.7,26.3,'Norte','Amparo laboral y minero.'],
+[9,'San Luis Potosí','San Luis Potosí','Ciudad Valles',-100.97,22.15,'Bajío','Medio ambiente y minería.'],
+[10,'Tabasco','Villahermosa','Cárdenas',-92.9,17.99,'Sureste','Derecho ambiental y energético.'],
+[11,'Michoacán','Morelia','Uruapan, Zamora, Lázaro Cárdenas',-101.2,19.7,'Occidente','Autonomía y libre determinación de comunidades indígenas.'],
+[12,'Sinaloa','Mazatlán','Culiacán, Los Mochis',-106.9,24.9,'Noroeste','Amparo penal en delitos contra la salud; derechos de pescadores.'],
+[13,'Oaxaca','Oaxaca','Salina Cruz, Huajuapan de León',-96.7,17.1,'Sur','Consulta indígena y proyectos eólicos del Istmo de Tehuantepec.'],
+[14,'Yucatán','Mérida','Conjunto judicial de Mérida',-89.6,20.9,'Península','Patrimonio cultural y medio ambiente.'],
+[15,'Baja California','Mexicali','Tijuana, Ensenada',-115.5,32.6,'Noroeste','Frontera: extradición, migración y comercio exterior.'],
+[16,'Guanajuato','Guanajuato','León, Celaya, Irapuato',-101.3,20.9,'Bajío','Amparo laboral en la industria automotriz.'],
+[17,'Chihuahua','Chihuahua','Ciudad Juárez, Parral',-106.1,28.6,'Norte','Violencia de género, desaparición y derecho al agua.'],
+[18,'Morelos','Cuernavaca','Cuautla',-99.25,18.65,'Centro','Propiedad y protección del patrimonio histórico.'],
+[19,'Tamaulipas','Reynosa','Matamoros, Nuevo Laredo, Ciudad Victoria, Tampico',-98.5,24.5,'Noreste','Frontera: extradición, desaparición forzada y comercio exterior.'],
+[20,'Chiapas','Tuxtla Gutiérrez','Tapachula, San Cristóbal de las Casas',-93.1,16.75,'Sureste','Derechos de personas migrantes y pueblos indígenas.'],
+[21,'Guerrero','Acapulco','Chilpancingo, Iguala',-99.9,17.3,'Sur','Derechos humanos, desaparición forzada y reparación integral.'],
+[22,'Querétaro','Querétaro','San Juan del Río',-100.4,20.6,'Bajío','Derecho a la ciudad y amparos fiscales.'],
+[23,'Zacatecas','Zacatecas','Fresnillo',-102.6,23.0,'Norte','Minería y derechos agrarios.'],
+[24,'Nayarit','Tepic','Bahía de Banderas',-104.9,21.5,'Occidente','Comunidades indígenas (cora, huichol) y tierras.'],
+[25,'Durango','Durango','Gómez Palacio',-104.7,24.0,'Norte','Derechos agrarios y minería.'],
+[26,'Baja California Sur','La Paz','Los Cabos',-110.3,24.1,'Noroeste','Medio ambiente y desarrollo turístico costero.'],
+[27,'Quintana Roo','Cancún','Chetumal, Playa del Carmen',-88.0,19.4,'Península','Zonas costeras, medio ambiente y proyectos de infraestructura.'],
+[28,'Tlaxcala','Tlaxcala','Apizaco',-98.2,19.6,'Centro','Pueblos originarios y amparo contra leyes locales.'],
+[29,'Hidalgo','Pachuca','Tulancingo',-98.8,20.4,'Centro','Derecho al agua y amparos en materia energética.'],
+[30,'Aguascalientes','Aguascalientes','Conjunto judicial de la capital',-102.3,21.9,'Bajío','Amparo penal en el sistema acusatorio y derechos de las víctimas.'],
+[31,'Campeche','Campeche','Ciudad del Carmen',-90.5,19.0,'Península','Protección de ecosistemas e infraestructura.'],
+[32,'Colima','Colima','Manzanillo',-103.7,19.2,'Occidente','Derecho portuario y ambiental.']
+].map(a=>({n:a[0],e:a[1],s:a[2],a:a[3],lon:a[4],lat:a[5],r:a[6],t:a[7]}));
+const OUT_MAIN=[[-117.1,32.5],[-114.7,32.7],[-111.1,31.3],[-108.2,31.8],[-108.2,31.3],[-106.5,31.8],[-104.9,30.6],[-103.1,29.0],[-102.4,29.8],[-101.4,29.8],[-100.7,29.1],[-99.5,27.5],[-99.1,26.4],[-97.4,25.9],[-97.7,24.0],[-97.8,22.5],[-97.2,20.7],[-96.4,19.3],[-95.1,18.7],[-94.4,18.2],[-92.9,18.4],[-91.3,18.5],[-90.6,19.9],[-90.4,21.0],[-89.0,21.4],[-87.2,21.5],[-86.8,21.2],[-87.5,19.6],[-87.7,18.3],[-88.3,18.5],[-89.1,17.9],[-90.9,17.8],[-91.4,17.3],[-90.4,16.1],[-92.2,14.5],[-94.0,16.1],[-95.2,15.9],[-97.0,15.8],[-98.5,16.3],[-100.0,17.0],[-101.8,17.9],[-103.5,18.3],[-105.2,20.0],[-105.5,21.5],[-106.5,23.2],[-108.0,25.0],[-109.5,26.7],[-110.7,27.9],[-112.2,29.3],[-113.1,31.2],[-114.7,31.8]];
+const OUT_BC=[[-117.1,32.5],[-116.6,31.5],[-115.7,30.3],[-114.2,28.3],[-114.9,27.7],[-112.3,24.8],[-110.0,22.9],[-109.6,23.2],[-110.3,24.2],[-111.6,26.0],[-112.4,27.7],[-114.1,29.6],[-114.8,31.0],[-114.7,32.7]];
+const MATERIAS=['Penal','Administrativa','Civil','Trabajo','Mercantil','Especializada'];
+
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const AI=(()=>{
+ const RX={
+  N:/\b(articulo|articulos|ley de amparo|constitucion|constitucional|cpeum|convencion|tratado|jurisprudencia|tesis|codigo|reglamento)\b|\barts?\./,
+  R:/\b(porque|toda vez que|ya que|en virtud de|debido a|dado que|puesto que|pues|de ahi que|en razon de|por lo tanto|por ende)\b/,
+  E:/\b(prueba|pruebas|constancia|constancias|foja|fojas|folio|acta|expediente|dictamen|pericial|testimonial|documental|acuse|certificacion|oficio|autos)\b/,
+  I:/(trascend|cambiaria el sentido|cambiar el sentido|habria variado|hubiera variado|de haberse|de haber |afecta las defensas|sin defensa|indefension|resultado del fallo|sentido del fallo|sentido de la sentencia|sentido de la resolucion|causa perjuicio)/,
+  A:/(la responsable|el tribunal responsable|la sala|la sentencia reclamada|el acto reclamado|la resolucion reclamada|considerando|sostuvo|determino|concluyo|razono|considero que|argumento que|estimo que)/,
+  Rep:/(reitero|como ya se dijo|me remito|se reproduce|en obvio de repeticiones|lo expuesto en la demanda|ya manifestado|lo manifestado en mi demanda|lo manifestado en la demanda)/,
+  Nov:/(no planteado|no fue planteado|cuestion novedosa|por primera vez|argumento nuevo|agravio novedoso|no plantee)/,
+  Ine:/(razon autonoma|razones autonomas|sustento autonomo|fundamento autonomo|no combatid|subsiste|no controvierte|aun cuando|aunque fuera cierto|a nada practico|no modificaria|no variaria|en el mismo sentido|se estimara fundado)/,
+  Inf:/(carece de sustento|no existe violacion|mera opinion|mero dicho|apreciacion subjetiva|sin sustento|no se actualiza|contraria a la jurisprudencia|calumni|corrupt|vendid|presunciones)/,
+  Gen:/(injust|no estoy de acuerdo|es ilegal|me causa agravio|me perjudica|inconforme)/
+ };
+ const VIOL={
+  procesal:/(emplazamiento|emplaz|notificacion|audiencia|desahogo|prueba|pruebas|termino|plazo|preclusion|caducidad|procedimiento|defensa adecuada|indefension|perito|ofrecimiento|admision|desech|traslado|vista|reposicion)/g,
+  formal:/(fundamentacion|motivacion|fundamento|motivo|incongruen|congruencia|exhaustividad|valoracion|precepto|razonamiento|requisitos formales|firma|vicio|omiti|nulidad)/g,
+  fondo:/(derecho humano|derechos humanos|pro persona|igualdad|discriminacion|debido proceso|legalidad|seguridad juridica|propiedad|libertad|inconstitucional|convencionalidad|presuncion de inocencia|interes superior|retroactiv|dignidad|integridad|salud|educacion|garantia|convencion americana)/g
+ };
+ const NORMS=[
+  [/(fundamentacion|motivacion|fundar|motivar)/,'Art. 16, primer párrafo, CPEUM: todo acto de molestia debe constar en mandamiento escrito de autoridad competente que funde y motive la causa legal del procedimiento.'],
+  [/(debido proceso|emplaz|audiencia|defensa|indefension|notificacion|formalidades esenciales)/,'Arts. 14, segundo párrafo, y 17 CPEUM; 8.1 CADH: nadie puede ser privado de sus derechos sino mediante juicio seguido ante tribunales previamente establecidos, cumpliéndose las formalidades esenciales del procedimiento.'],
+  [/(igualdad|discriminacion|pro persona)/,'Art. 1 CPEUM (principio pro persona, igualdad y no discriminación) y art. 24 CADH.'],
+  [/presuncion de inocencia/,'Art. 20, apartado B, fracc. I, CPEUM y art. 8.2 CADH (presunción de inocencia).'],
+  [/(retroactiv)/,'Art. 14, primer párrafo, CPEUM: a ninguna ley se dará efecto retroactivo en perjuicio de persona alguna.'],
+  [/(propiedad|posesion|despojo)/,'Arts. 14 y 16 CPEUM; art. 21 CADH (propiedad privada): nadie puede ser privado de sus propiedades sin cumplir las formalidades esenciales.'],
+  [/(interes superior|menor|nino|ninez|adolescente)/,'Art. 4 CPEUM (interés superior de la niñez) y art. 3.1 de la Convención sobre los Derechos del Niño.'],
+  [/(libertad|detencion|prision)/,'Arts. 14, 16 y 19 CPEUM; art. 7 CADH (libertad personal).'],
+  [/(trabajador|despido|laboral|salario)/,'Art. 123 CPEUM (derechos laborales) y arts. 14 y 16 (legalidad).']
+ ];
+ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+ function pcts(raw){const e=raw.map(v=>Math.exp(v/14));const s=e.reduce((a,b)=>a+b,0);let p=e.map(v=>Math.round(v/s*100));const d=100-p.reduce((a,b)=>a+b,0);p[p.indexOf(Math.max(...p))]+=d;return p}
+ function violation(t){
+  const hits={},cs={};
+  Object.keys(VIOL).forEach(k=>{const m=t.match(VIOL[k])||[];cs[k]=m.length;hits[k]=[...new Set(m)]});
+  const raw=Object.keys(cs).map(k=>cs[k]*2+1);const s=raw.reduce((a,b)=>a+b,0);
+  const p=raw.map(v=>Math.round(v/s*100));p[p.indexOf(Math.max(...p))]+=100-p.reduce((a,b)=>a+b,0);
+  const keys=Object.keys(cs);let mi=0;raw.forEach((v,i)=>{if(v>raw[mi])mi=i});
+  return{procesal:p[0],formal:p[1],fondo:p[2],main:keys[mi],hits,none:Object.values(cs).every(v=>v===0)};
+ }
+ function analyze(text,meta){
+  meta=meta||{};const t=norm(text),wc=(text.trim().match(/\S+/g)||[]).length;
+  const f={};Object.keys(RX).forEach(k=>f[k]=RX[k].test(t));
+  const b=x=>x?1:0;
+  let fu=8+16*b(f.N)+16*b(f.R)+14*b(f.E)+18*b(f.I)+16*b(f.A)+10*Math.min(1,wc/60);
+  if(f.Ine)fu*=.5;if(f.Rep||f.Nov)fu*=.45;if(f.Inf)fu*=.5;
+  const inop=6+34*b(!f.A)+24*b(f.Rep)+22*b(f.Nov)+16*b(wc<18)+12*b(f.Gen&&!f.R)+10*b(!f.N&&!f.E);
+  const ineff=6+40*b(f.Ine)+12*b(f.N&&f.R&&!f.I)+6*b(f.A&&!f.I);
+  const infd=6+34*b(f.Inf)+14*b(f.R&&!f.N&&!f.E)+8*b(f.N&&!f.E&&!f.I)+10*b(f.A&&f.R&&!f.E&&!f.N);
+  const raw=[fu,infd,inop,ineff];const p=pcts(raw);
+  const names=['FUNDADO','INFUNDADO','INOPERANTE','INEFICAZ'];let mi=0;p.forEach((v,i)=>{if(v>p[mi])mi=i});
+  const grade={FUNDADO:p[0],INFUNDADO:p[1],INOPERANTE:p[2],INEFICAZ:p[3],main:names[mi],conf:p[mi]};
+  const signals=[
+   {k:'Ataca la consideración esencial de la responsable',ok:f.A},{k:'Cita norma, tratado o precedente',ok:f.N},{k:'Expone razones (nexo causal)',ok:f.R},
+   {k:'Se apoya en constancias o pruebas',ok:f.E},{k:'Demuestra trascendencia al sentido del fallo',ok:f.I},
+   {k:'Reitera la demanda / se remite a ella',ok:f.Rep,bad:true},{k:'Introduce un argumento novedoso',ok:f.Nov,bad:true},
+   {k:'Sustento autónomo no combatido / hipótesis irrelevante',ok:f.Ine,bad:true},{k:'Afirmación sin sustento o descalificación',ok:f.Inf,bad:true}];
+  const norms=NORMS.filter(n=>n[0].test(t)).map(n=>n[1]);if(!norms.length)norms.push('Arts. 14 y 16 CPEUM (garantías de legalidad y seguridad jurídica).');
+  const sents=(text.match(/[^.;]+[.;]?/g)||[]).map(x=>x.trim()).filter(Boolean);
+  const acts=sents.find(s=>/(sostuvo|determin|resolvi|consider|sentencia|resoluci|auto |laudo|acto reclamado)/i.test(s))||sents[0]||text;
+  const q=(meta.q||'').trim()||'[NOMBRE DEL QUEJOSO]',au=(meta.au||'').trim()||'[AUTORIDAD RESPONSABLE]',act=(meta.act||'').trim();
+  const fund=grade.main==='FUNDADO';
+  const menor='La autoridad responsable ('+au+')'+(act?' emitió el acto reclamado consistente en: '+act+'. ':'. ')+'Según el quejoso: «'+acts.trim().slice(0,260)+(acts.length>260?'…':'')+'»';
+  const concl={FUNDADO:'Quedó demostrado que el acto reclamado contraviene la norma citada y que la violación trasciende al sentido del fallo; en consecuencia, el concepto de violación resulta FUNDADO y procede conceder la protección constitucional para los efectos que se precisen.',
+   INFUNDADO:'Del contraste entre el acto reclamado y la norma citada no se advierte la transgresión alegada, o los argumentos carecen de sustento jurídico o fáctico; el concepto de violación resulta INFUNDADO.',
+   INOPERANTE:'El planteamiento no controvierte las consideraciones esenciales que sustentan la resolución reclamada, o reitera lo ya expuesto, por lo que no existe materia de estudio y el concepto de violación resulta INOPERANTE.',
+   INEFICAZ:'Aun si se estimara cierto lo alegado, subsisten razones que sostienen el fallo y que no se combatieron, por lo que no podría modificarse su sentido; el concepto de violación resulta INEFICAZ.'}[grade.main];
+  const res=fund?[
+   'PRIMERO.- La Justicia de la Unión AMPARA Y PROTEGE a '+q+', contra el acto reclamado de '+au+', precisado en el resultando primero, por los motivos y para los efectos expuestos en el último considerando de esta sentencia.',
+   'SEGUNDO.- La Justicia de la Unión NO AMPARA NI PROTEGE a '+q+', por lo que respecta a los conceptos de violación que resultaron infundados, inoperantes o ineficaces, en su caso.']:[
+   'PRIMERO.- La Justicia de la Unión NO AMPARA NI PROTEGE a '+q+', contra el acto reclamado de '+au+', precisado en el resultando primero, por las razones expuestas en esta sentencia.',
+   'SEGUNDO.- Notifíquese; en su oportunidad, archívese el expediente como asunto concluido. (De resultar fundados otros conceptos de violación, la Justicia de la Unión AMPARARÍA Y PROTEGERÍA a '+q+' únicamente por estos.)'];
+  return{viol:violation(t),grade,signals,syl:{mayor:norms,menor,concl},res,fund,wc};
+ }
+ return{analyze,norm};
+})();
+
+const Stage=(()=>{
+ if(typeof THREE==='undefined'||!THREE.OrbitControls){
+  const nop=()=>{};
+  return{off:true,mount(h){h.innerHTML='<div style="display:flex;height:100%;align-items:center;justify-content:center;padding:20px;text-align:center;color:var(--mut)">El motor 3D no está disponible. Revisa tu conexión y recarga la página.</div>'},setPick:nop,select:nop,flash:nop,clearAll:nop,showLabels:nop,balance:nop,strike(cb){if(cb)cb()},burst:nop};
+ }
+ const wrap=document.createElement('div');wrap.id='stageWrap';
+ const cv=document.createElement('canvas');wrap.appendChild(cv);
+ const tb=document.createElement('div');tb.className='stage-tb';
+ tb.innerHTML='<button class="ibtn off" data-a="rot" title="Rotación automática"><i class="fa-solid fa-rotate"></i></button><button class="ibtn" data-a="rst" title="Restablecer vista"><i class="fa-solid fa-crosshairs"></i></button><button class="ibtn" data-a="fs" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button>';
+ wrap.appendChild(tb);
+ tb.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!ctl)return;const a=b.dataset.a;
+  if(a==='rot'){ctl.autoRotate=!ctl.autoRotate;b.classList.toggle('off',!ctl.autoRotate)}
+  else if(a==='rst'){setScene(mode)}
+  else if(a==='fs'){if(document.fullscreenElement)document.exitFullscreen();else if(wrap.requestFullscreen)wrap.requestFullscreen()}
+ });
+ let R,scene,cam,ctl,inited=false,mode='map',hover=0,sel=0,pick=null,labelsOn=true,camT=0,shake=0,stars;
+ const rc=new THREE.Raycaster(),mv=new THREE.Vector2(),clock=new THREE.Clock(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),-2),tmp=new THREE.Vector3();
+ const mapG=new THREE.Group(),courtG=new THREE.Group(),pr=[],lab=[],ov={};
+ let pl1,pl2,balG,beam,panL,panR,gavP,spPts,spPos,spCol,spVel=[],spLife=[];
+ const bal={a:0,v:0,t:0,pw:0,pv:0,hold:0},gav={t:-1,cb:null,hit:false};
+ const goal={p:new THREE.Vector3(0,11,8.5),t:new THREE.Vector3(.3,0,0)};
+ const prj=(lo,la)=>[(lo+102)*.55,(la-23.8)*.55];
+ const SP=160;
+ function mkLabel(txt,color){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.font='bold 64px Segoe UI,Arial';x.textAlign='center';x.textBaseline='middle';x.shadowColor=color||'#FF5CA8';x.shadowBlur=14;x.fillStyle='#fff';x.fillText(txt,64,66);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(.6,.6,1);return s}
+ function buildMap(){
+  const grid=new THREE.GridHelper(26,52,0xFF5CA8,0x4a2268);grid.material.transparent=true;grid.material.opacity=.22;grid.position.y=-.01;mapG.add(grid);
+  [OUT_MAIN,OUT_BC].forEach(poly=>{
+   const sh=new THREE.Shape();poly.forEach((p,i)=>{const[x,y]=prj(p[0],p[1]);i?sh.lineTo(x,y):sh.moveTo(x,y)});
+   const g=new THREE.ShapeGeometry(sh);g.rotateX(-Math.PI/2);
+   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0x2a1240,transparent:true,opacity:.55,side:THREE.DoubleSide}));m.position.y=.005;mapG.add(m);
+   const pts=poly.map(p=>{const[x,y]=prj(p[0],p[1]);return new THREE.Vector3(x,.02,-y)});
+   mapG.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xFF5CA8})));
+  });
+  C.forEach(c=>{
+   const[x,y]=prj(c.lon,c.lat);
+   const m=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,1,6),new THREE.MeshStandardMaterial({color:0x3a1a4f,emissive:0x6a1f5a,emissiveIntensity:.6,metalness:.4,roughness:.35,transparent:true,opacity:.93}));
+   m.position.set(x,.1,-y);m.scale.y=.2;m.userData={n:c.n,h:.2};
+   m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:0xFF5CA8,transparent:true,opacity:.8})));
+   mapG.add(m);pr[c.n]=m;
+   const s=mkLabel(String(c.n));s.position.set(x,1,-y);mapG.add(s);lab[c.n]=s;
+  });
+ }
+ function buildCourt(){
+  const gold=new THREE.MeshStandardMaterial({color:0xFFD93D,metalness:.9,roughness:.25,emissive:0x5a4300,emissiveIntensity:.5});
+  const wood=new THREE.MeshStandardMaterial({color:0x6b3a1e,metalness:.2,roughness:.6,emissive:0x2a1004,emissiveIntensity:.4});
+  const ring=new THREE.Mesh(new THREE.RingGeometry(5.6,5.75,80),new THREE.MeshBasicMaterial({color:0xFF5CA8,side:THREE.DoubleSide,transparent:true,opacity:.8}));ring.rotation.x=-Math.PI/2;ring.position.y=.01;courtG.add(ring);
+  const ring2=new THREE.Mesh(new THREE.RingGeometry(4.2,4.28,80),new THREE.MeshBasicMaterial({color:0x5B8CFF,side:THREE.DoubleSide,transparent:true,opacity:.8}));ring2.rotation.x=-Math.PI/2;ring2.position.y=.01;courtG.add(ring2);
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(5.6,64),new THREE.MeshBasicMaterial({color:0x2a1240,transparent:true,opacity:.6}));disc.rotation.x=-Math.PI/2;courtG.add(disc);
+
+  balG=new THREE.Group();balG.position.set(-2.6,0,0);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.3,.25,32),gold);base.position.y=.125;balG.add(base);
+  const col=new THREE.Mesh(new THREE.CylinderGeometry(.1,.14,3.2,16),gold);col.position.y=1.8;balG.add(col);
+  beam=new THREE.Group();beam.position.y=3.4;balG.add(beam);
+  const bar=new THREE.Mesh(new THREE.BoxGeometry(4.2,.1,.14),gold);beam.add(bar);
+  beam.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.17,16,16),gold),{}));
+  const mkPan=(x,txt)=>{const g=new THREE.Group();g.position.set(x,0,0);
+   const pan=new THREE.Mesh(new THREE.CylinderGeometry(.85,.6,.12,32),gold);pan.position.y=-1.5;g.add(pan);
+   [-.7,.7].forEach(dx=>{g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(dx,-1.45,0)]),new THREE.LineBasicMaterial({color:0xFFD93D})))});
+   const l=mkLabel(txt,'#FFD93D');l.scale.set(1.8,1.8,1);l.position.set(0,-.7,0);g.add(l);beam.add(g);return g};
+
+  panL=mkPan(-2,'Q');panR=mkPan(2,'A');
+  courtG.add(balG);
+
+  const gv=new THREE.Group();gv.position.set(3.4,0,0);
+  const blk=new THREE.Mesh(new THREE.CylinderGeometry(.85,.95,.3,32),wood);blk.position.y=.15;gv.add(blk);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.9,.04,8,48),gold);rim.rotation.x=Math.PI/2;rim.position.y=.3;gv.add(rim);
+  gavP=new THREE.Group();gavP.position.set(.9,1.9,0);gv.add(gavP);
+  const handle=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,1.8,12),wood);handle.rotation.z=Math.PI/2;handle.position.x=-.9;gavP.add(handle);
+  const head=new THREE.Mesh(new THREE.CylinderGeometry(.33,.33,1.1,24),wood);head.rotation.x=Math.PI/2;head.position.x=-1.8;gavP.add(head);
+  [-.5,.5].forEach(z=>{const b=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.08,24),gold);b.rotation.x=Math.PI/2;b.position.set(-1.8,0,z);gavP.add(b)});
+  gavP.rotation.z=-.8;courtG.add(gv);
+ }
+ function initSparks(){
+  const g=new THREE.BufferGeometry();spPos=new Float32Array(SP*3);spCol=new Float32Array(SP*3);for(let i=0;i<SP;i++){spPos[i*3+1]=-100;spLife[i]=0;spVel[i]=new THREE.Vector3()}
+  g.setAttribute('position',new THREE.BufferAttribute(spPos,3));g.setAttribute('color',new THREE.BufferAttribute(spCol,3));
+  spPts=new THREE.Points(g,new THREE.PointsMaterial({size:.14,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));spPts.frustumCulled=false;scene.add(spPts);
+ }
+ function burst(p,n,hex){if(!inited||!S.fx)return;const col=new THREE.Color(hex||0xFFD93D);let c=0;for(let i=0;i<SP&&c<n;i++){if(spLife[i]<=0){spPos.set([p.x,p.y,p.z],i*3);spVel[i].set((Math.random()-.5)*5,Math.random()*5+1,(Math.random()-.5)*5);spLife[i]=.7+Math.random()*.7;spCol.set([col.r,col.g,col.b],i*3);c++}}}
+ function init(){
+  R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x07030D,.018);
+  cam=new THREE.PerspectiveCamera(50,1,.1,200);cam.position.copy(goal.p);
+  ctl=new THREE.OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.07;ctl.minDistance=3;ctl.maxDistance=32;ctl.autoRotateSpeed=1.2;ctl.maxPolarAngle=Math.PI*.495;ctl.target.copy(goal.t);
+  scene.add(new THREE.AmbientLight(0xaa6688,.9));const dl=new THREE.DirectionalLight(0xffffff,.45);dl.position.set(3,10,6);scene.add(dl);
+  pl1=new THREE.PointLight(0xFF5CA8,1.8,40);pl1.position.set(-4,6,4);pl2=new THREE.PointLight(0x5B8CFF,1.8,40);pl2.position.set(4,6,4);scene.add(pl1,pl2);
+  const sg=new THREE.BufferGeometry(),sp=new Float32Array(900*3);for(let i=0;i<900;i++){const r=18+Math.random()*28,th=Math.random()*6.283,ph=Math.acos(2*Math.random()-1);sp[i*3]=r*Math.sin(ph)*Math.cos(th);sp[i*3+1]=Math.abs(r*Math.cos(ph))*.8+1;sp[i*3+2]=r*Math.sin(ph)*Math.sin(th)}
+  sg.setAttribute('position',new THREE.BufferAttribute(sp,3));stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffaad0,size:.12,transparent:true,opacity:.8}));scene.add(stars);
+  buildMap();buildCourt();scene.add(mapG,courtG);initSparks();
+  cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mv.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);if(mode==='map'){rc.setFromCamera(mv,cam);const h=rc.intersectObjects(pr.filter(Boolean),false)[0];hover=h?h.object.userData.n:0;cv.style.cursor=hover?'pointer':'grab'}});
+  let dn=null;cv.addEventListener('pointerdown',e=>{dn=[e.clientX,e.clientY]});
+  cv.addEventListener('pointerup',e=>{if(!dn)return;const d=Math.hypot(e.clientX-dn[0],e.clientY-dn[1]);dn=null;if(d<6&&mode==='map'&&hover&&pick){pick(hover)}});
+  cv.addEventListener('pointerleave',()=>{hover=0});
+  new ResizeObserver(resize).observe(wrap);window.addEventListener('resize',resize);
+  inited=true;loop();
+ }
+ function resize(){if(!R)return;const w=wrap.clientWidth,h=wrap.clientHeight;if(w<10||h<10)return;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+ const ease=k=>1-Math.pow(1-k,3);
+ function impact(){
+  const p=new THREE.Vector3(-1.8,-.2,0);gavP.localToWorld(p);burst(p,70,0xFFD93D);burst(p,30,0xFF5CA8);SFX.gavel();shake=.3;
+  if(gav.cb){const f=gav.cb;gav.cb=null;f()}
+ }
+ function loop(){
+  requestAnimationFrame(loop);
+  if(!wrap.isConnected||wrap.clientWidth<10||document.hidden)return;
+  const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
+  stars.visible=S.fx;stars.rotation.y+=dt*.01;
+  if(camT>0){camT-=dt;cam.position.lerp(goal.p,.07);ctl.target.lerp(goal.t,.07)}
+  rc.setFromCamera(mv,cam);if(rc.ray.intersectPlane(plane,tmp)){pl1.position.lerp(new THREE.Vector3(tmp.x-2,3.8,tmp.z+2),.08);pl2.position.lerp(new THREE.Vector3(tmp.x+2,3.8,tmp.z-1.5),.08)}
+  if(mode==='map'){
+   const cq=new THREE.Color(),tcol=new THREE.Color(),tem=new THREE.Color();
+   for(let n=1;n<=32;n++){const m=pr[n];if(!m)continue;let th=.22,col=0x3a1a4f,em=0x6a1f5a,ei=.6;
+    if(S.conq.indexOf(n)>=0){th=.9;col=0x3fae1f;em=0x7CFF4F;ei=1.1}
+    if(sel===n){th=1.5;col=0x2f5fe0;em=0x5B8CFF;ei=1.7}
+    if(hover===n){th+=.3;ei+=.6}
+    const o=ov[n];if(o){th=o.h;col=o.col;em=o.em;ei=2}
+    m.userData.h+=(th-m.userData.h)*.13;m.scale.y=m.userData.h;m.position.y=m.userData.h/2;
+    tcol.set(col);tem.set(em);m.material.color.lerp(tcol,.15);m.material.emissive.lerp(tem,.15);m.material.emissiveIntensity+=(ei-m.material.emissiveIntensity)*.15;
+    lab[n].visible=labelsOn||!!o||sel===n;lab[n].position.y=m.userData.h+.4;}
+  } else {
+   const idle=Math.sin(t*.7)*.035;if(bal.hold>0)bal.hold-=dt;const tg=bal.hold>0?bal.t:idle;
+   bal.v+=(-22*(bal.a-tg)-4*bal.v)*dt;bal.a+=bal.v*dt;beam.rotation.z=bal.a;
+   bal.pv+=(-30*bal.pw-2.2*bal.pv-bal.v*1.5)*dt;bal.pw+=bal.pv*dt;panL.rotation.z=-bal.a+bal.pw;panR.rotation.z=-bal.a+bal.pw*.8;
+   balG.rotation.y+=dt*.35;
+   if(gav.t>=0){gav.t+=dt;const g=gav.t;let a;
+    if(g<.35)a=-.8-.35*ease(g/.35);
+    else if(g<.5){const k=(g-.35)/.15;a=-1.15+1.9*k*k}
+    else{if(!gav.hit){gav.hit=true;impact()}const k=g-.5;a=.75-1.55*(1-Math.exp(-k*6))+Math.sin(k*30)*.05*Math.exp(-k*6);if(k>.9){a=-.8;gav.t=-1}}
+    gavP.rotation.z=a}
+   if(shake>0){shake-=dt;courtG.position.x=(Math.random()-.5)*shake*.4}else courtG.position.x=0;
+  }
+  for(let i=0;i<SP;i++){if(spLife[i]>0){spLife[i]-=dt;spVel[i].y-=7*dt;spPos[i*3]+=spVel[i].x*dt;spPos[i*3+1]+=spVel[i].y*dt;spPos[i*3+2]+=spVel[i].z*dt;if(spLife[i]<=0)spPos[i*3+1]=-100}}
+  spPts.geometry.attributes.position.needsUpdate=true;spPts.geometry.attributes.color.needsUpdate=true;
+  ctl.update();R.render(scene,cam);
+ }
+ function setScene(m){mode=m;mapG.visible=m==='map';courtG.visible=m==='court';
+  if(m==='map'){goal.p.set(0,11,8.5);goal.t.set(.3,0,0)}
+  else{goal.p.set(0,4.2,11);goal.t.set(0,1.8,0)}
+  camT=1.4;ctl&&(ctl.enabled=true)}
+ return{
+  mount(host,m){if(!inited)init();host.appendChild(wrap);setScene(m);hover=0;requestAnimationFrame(resize);setTimeout(resize,60)},
+  setPick(f){pick=f},select(n){sel=n;if(n&&pr[n]){burst(pr[n].position.clone().setY(.3),24,0x5B8CFF)}},
+  flash(n,type,ms){const g=type==='good';ov[n]={h:g?1.7:.9,col:g?0x3fae1f:0xb0143a,em:g?0x7CFF4F:0xFF4B4B};if(g)burst(pr[n].position.clone().setY(.6),30,0x7CFF4F);setTimeout(()=>{delete ov[n]},ms||900)},
+  clearAll(){sel=0;hover=0;Object.keys(ov).forEach(k=>delete ov[k])},showLabels(b){labelsOn=b},
+  balance(d){bal.t=.32*d;bal.hold=2.6;bal.pv+=d*1.2},strike(cb){if(mode!=='court')return cb&&cb();gav.t=0;gav.hit=false;gav.cb=cb||null},
+  burst(p,n,c){burst(p,n,c)}
+ };
+})();
+
+const MODS=[
+ {id:'home',ic:'fa-house',nm:'Centro de Mando',ds:'Resumen de tu progreso y accesos rápidos.',col:'var(--cy)'},
+ {id:'m1',ic:'fa-map-location-dot',nm:'Circuitos Judiciales',ds:'Mapa 3D/SVG con las fichas técnicas de los 32 circuitos.',col:'var(--cy)'},
+ {id:'m2',ic:'fa-robot',nm:'IA de Amparo',ds:'Clasifica violaciones, califica conceptos y redacta resolutivos.',col:'var(--vi)'},
+ {id:'m3',ic:'fa-gamepad',nm:'Arena de Juegos',ds:'Speedrun, juez, rompecabezas, laboratorio, trivia y examen.',col:'var(--ok)'},
+ {id:'m4',ic:'fa-calendar-days',nm:'Plazos y Matriz',ds:'Calculadora de términos y comparativa directo/indirecto.',col:'var(--wa)'},
+ {id:'m6',ic:'fa-book-open',nm:'Glosario',ds:'Tarjetas de estudio con los términos clave del amparo.',col:'var(--cy)'},
+ {id:'m7',ic:'fa-diagram-project',nm:'Etapas del Juicio',ds:'Recorrido paso a paso del amparo indirecto y directo.',col:'var(--vi)'},
+ {id:'m5',ic:'fa-file-pdf',nm:'Reporte PDF',ds:'Ficha técnica legal de toda tu sesión.',col:'var(--go)'}
+];
+let curMod='home';
+function go(id){
+ Games.stopAll();curMod=id;
+ $$('.mod').forEach(m=>m.classList.toggle('on',m.id==='mod-'+id));
+ $$('.navbtn').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
+ Stage.setPick(null);
+ if(id==='m1')M1.enter();
+ if(id==='m2')M2.enter();
+ if(id==='m3')Games.enter();
+ if(id==='m4')M4.enter();
+ if(id==='m5')M5.gen();
+ if(id==='m6')M6.enter();
+ if(id==='m7')M7.enter();
+ if(id==='home')renderHome();
+ window.scrollTo({top:0,behavior:'smooth'});SFX.click();
+}
+function buildNav(){
+ $('#side').innerHTML=MODS.map(m=>'<button class="navbtn" data-go="'+m.id+'" title="'+m.nm+'"><i class="fa-solid '+m.ic+'"></i><span>'+m.nm+'</span></button>').join('');
+ $('#homeTiles').innerHTML=MODS.filter(m=>m.id!=='home').map(m=>'<div class="glass tile" data-go="'+m.id+'"><i class="fa-solid '+m.ic+'" style="color:'+m.col+';text-shadow:0 0 14px '+m.col+'"></i><h3>'+m.nm+'</h3><p>'+m.ds+'</p></div>').join('');
+ document.addEventListener('click',e=>{const t=e.target.closest('[data-go]');if(t)go(t.dataset.go)});
+}
+function renderHome(){
+ $('#homeStats').innerHTML=[['Circuitos explorados',S.explored.length+'/32'],['Casos analizados',S.cases.length],['Estados conquistados',S.conq.length+'/32'],['XP total',S.xp],['Rango',lvl().name],['Racha (días)',S.streak],['Insignias',S.badges.length+'/'+BADGES.length],['Glosario',S.learned.length+'/'+GLOS.length]]
+  .map(a=>'<div class="glass stat"><b style="font-size:'+(String(a[1]).length>8?'15px':'26px')+'">'+esc(a[1])+'</b><small>'+a[0]+'</small></div>').join('');
+ $('#homeBadges').innerHTML=BADGES.map(b=>'<div class="glass bdg'+(S.badges.indexOf(b[0])>=0?' on':'')+'" title="'+esc(b[3])+'"><i class="fa-solid '+b[1]+'"></i><b>'+esc(b[2])+'</b><small>'+esc(b[3])+'</small></div>').join('');
+}
+
+const M1={sel:0,view:'3d',built:false,
+ enter(){
+  if(!this.built){this.build();this.built=true;if(Stage.off)this.setView('svg')}
+  Stage.setPick(n=>M1.select(n));
+  if(this.view==='3d'){Stage.mount($('#host-m1'),'map');Stage.showLabels(true);Stage.clearAll();if(this.sel)Stage.select(this.sel)}
+ },
+ build(){
+  const chips=C.map(c=>'<span class="chip" data-n="'+c.n+'"><b style="color:var(--cy)">'+c.n+'</b> '+esc(c.e)+'</span>').join('');
+  $('#m1chips').innerHTML=chips;
+  $('#m1chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(c)M1.select(+c.dataset.n)});
+  $('#m1Search').addEventListener('input',e=>{const q=AI.norm(e.target.value);$$('#m1chips .chip').forEach(ch=>{const c=C[ch.dataset.n-1];ch.style.display=(!q||AI.norm(c.e+' '+c.s+' '+c.a+' '+c.n+' '+c.r).includes(q))?'':'none'})});
+
+  const sx=lo=>(lo+118)*28.5,sy=la=>(33-la)*32,path=p=>'M'+p.map(q=>sx(q[0]).toFixed(1)+','+sy(q[1]).toFixed(1)).join('L')+'Z';
+  const hex=(cx,cy,r)=>[0,1,2,3,4,5].map(i=>{const a=Math.PI/3*i;return(cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1)}).join(' ');
+  $('#svgMap').innerHTML='<svg id="svgM" viewBox="0 0 920 620" style="width:100%;max-height:640px"><defs><filter id="gl"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'+
+   '<path d="'+path(OUT_MAIN)+'" fill="rgba(11,42,74,.55)" stroke="#FF5CA8" stroke-width="2" filter="url(#gl)"/><path d="'+path(OUT_BC)+'" fill="rgba(11,42,74,.55)" stroke="#FF5CA8" stroke-width="2" filter="url(#gl)"/>'+
+   C.map(c=>'<g><polygon class="hx" data-n="'+c.n+'" points="'+hex(sx(c.lon),sy(c.lat),17)+'"><title>Circuito '+c.n+' · '+esc(c.e)+'</title></polygon><text x="'+sx(c.lon)+'" y="'+sy(c.lat)+'">'+c.n+'</text></g>').join('')+'</svg>';
+  $('#svgMap').addEventListener('click',e=>{const h=e.target.closest('.hx');if(h)M1.select(+h.dataset.n)});
+  $('#v3d').onclick=()=>M1.setView('3d');$('#vsvg').onclick=()=>M1.setView('svg');
+  const f=$('#ficha');f.addEventListener('mousemove',e=>{const r=f.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;f.style.transform='perspective(900px) rotateY('+(x*7)+'deg) rotateX('+(-y*7)+'deg)'});f.addEventListener('mouseleave',()=>f.style.transform='');
+  this.paint();
+ },
+ setView(v){this.view=v;$('#v3d').classList.toggle('on',v==='3d');$('#vsvg').classList.toggle('on',v==='svg');$('#m1stage').style.display=v==='3d'?'':'none';$('#m1svg').style.display=v==='svg'?'':'none';if(v==='3d')this.enter();this.paint()},
+ paint(){$$('#svgMap .hx').forEach(h=>{const n=+h.dataset.n;h.classList.toggle('sel',n===this.sel);h.classList.toggle('cq',S.conq.indexOf(n)>=0)});$$('#m1chips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.n===this.sel))},
+ select(n){
+  this.sel=n;Stage.select(n);this.paint();this.ficha(n);SFX.click();
+  if(S.explored.indexOf(n)<0){S.explored.push(n);save();addXP(10,'Circuito '+n+' explorado')}
+ },
+ ficha(n){
+  const c=C[n-1],ord=ORD[n];
+  const mat=MATERIAS.map(m=>{const on=m!=='Especializada'||n===1;return'<span class="chip '+(on?'on':'off')+'">'+m+'</span>'}).join('');
+  const nm=(t,j)=>t+' del '+ord+' Circuito';
+  $('#ficha').innerHTML='<div class="flex" style="gap:12px"><div class="hexn">'+n+'</div><div><div style="font-weight:800;font-size:16px">'+ord+' Circuito</div><div class="mut" style="font-size:12px">'+esc(c.e)+' · Región '+esc(c.r)+'</div></div></div>'+
+   '<div class="kv"><b>Sede principal</b><span>'+esc(c.s)+'</span><b>Sedes / ciudades auxiliares</b><span>'+esc(c.a)+' <i class="mut">(referencial)</i></span></div>'+
+   '<div style="font-size:12px;color:var(--cy);font-weight:600;margin-bottom:4px">Materias</div><div class="flex" style="gap:5px">'+mat+'</div>'+
+   '<div class="mut" style="font-size:11px;margin-top:4px">Los órganos mixtos conocen varias materias según su sede; la especializada (competencia económica, radiodifusión y telecomunicaciones) tiene sede en la CDMX.</div>'+
+   '<div style="font-size:12px;color:var(--cy);font-weight:600;margin:10px 0 2px">Órganos adscritos (nomenclatura oficial)</div>'+
+   '<div class="org"><b>Tribunales Colegiados de Circuito</b><br>«Primer Tribunal Colegiado [en Materia…] del '+ord+' Circuito»</div>'+
+   '<div class="org"><b>Tribunales Colegiados de Apelación</b><br>«'+nm('Primer Tribunal Colegiado de Apelación')+'»</div>'+
+   '<div class="org"><b>Juzgados de Distrito</b><br>«Juzgado Primero de Distrito en el Estado de '+esc(c.e)+'»</div>'+
+   '<div class="mut" style="font-size:11px;margin-top:4px"><i class="fa-solid fa-triangle-exclamation" style="color:var(--wa)"></i> El número vigente de cada órgano cambia con los acuerdos de creación y reorganización; consúltalo en el sitio oficial.</div>'+
+   '<div style="font-size:12px;color:var(--go);font-weight:600;margin:10px 0 2px"><i class="fa-solid fa-book-open"></i> Tema de estudio sugerido (didáctico)</div><div style="font-size:12.5px">'+esc(c.t)+'</div>'+
+   '<a class="btn btn-gold" style="margin-top:12px;font-size:12px" target="_blank" rel="noopener" href="'+DGGJ+'"><i class="fa-solid fa-landmark"></i> Verificar en la DGGJ</a>';
+ }
+};
+
+const SAMPLES=[
+ 'El Tribunal responsable sostuvo en el considerando tercero que no existió indefensión; sin embargo, toda vez que la constancia de notificación de fojas 45 del expediente acredita que no fui emplazado conforme a los artículos 14 y 16 constitucionales y 8.1 de la Convención Americana, se me dejó sin defensa. De haberse realizado el emplazamiento, el resultado del fallo habría variado, lo que trasciende al sentido de la sentencia.',
+ 'No estoy de acuerdo con lo resuelto porque es injusto. Reitero lo manifestado en mi demanda inicial.',
+ 'La responsable sostuvo que el contrato es nulo por falta de forma, porque el artículo 2228 del Código Civil lo exige, y además por otra razón autónoma no combatida; aun cuando se estimara fundado lo anterior, la sentencia subsiste con sustento autónomo.',
+ 'La responsable consideró que la demanda se presentó fuera de plazo; afirmo que es ilegal, pero carece de sustento mi dicho: no existe violación alguna al artículo 17, pues mi planteamiento es una mera opinión.'
+];
+const M2={last:null,built:false,
+ enter(){
+  Stage.mount($('#host-m2'),'court');Stage.setPick(null);
+  if(!this.built){this.built=true;
+   $('#qGo').onclick=()=>this.run();$('#qGavel').onclick=()=>this.gavel();
+   $('#qClear').onclick=()=>{['qName','qAuth','qAct','qText'].forEach(i=>{$('#'+i).value=''});this.last=null;$('#qOut').innerHTML='<div class="glass p mut">Sin análisis.</div>';SFX.click()};
+   this.hist();
+   $$('[data-s]').forEach(b=>b.onclick=()=>{$('#qText').value=SAMPLES[+b.dataset.s];SFX.click()});}
+ },
+ bar(l,p,c){return'<div style="margin:6px 0"><div class="flex" style="justify-content:space-between;font-size:12px"><span>'+l+'</span><b style="color:'+c+'">'+p+'%</b></div><div class="bar"><i style="width:'+p+'%;background:'+c+';box-shadow:0 0 8px '+c+'"></i></div></div>'},
+ run(){
+  const text=$('#qText').value.trim();if(text.length<15){toast('Escribe un concepto de violación (mínimo una oración).','er');SFX.err();return}
+  const r=AI.analyze(text,{q:$('#qName').value,au:$('#qAuth').value,act:$('#qAct').value});this.last=r;r.dictated=false;
+  const g=r.grade,bc={FUNDADO:'b-ok',INFUNDADO:'b-er',INOPERANTE:'b-wa',INEFICAZ:'b-vi'}[g.main];
+  const vn={procesal:'Violación PROCESAL',formal:'Violación FORMAL',fondo:'Violación de FONDO'}[r.viol.main];
+  const vs=r.viol;
+  $('#qOut').innerHTML=
+   '<div class="glass p"><h3 style="color:var(--cy);margin-bottom:6px">a) Clasificador de violaciones</h3>'+
+   (vs.none?'<p class="mut" style="font-size:13px">No se detectaron términos de clasificación claros; se muestra una distribución neutra.</p>':'<div class="badge b-cy">'+vn+'</div>')+
+   this.bar('Procesal (durante el procedimiento)',vs.procesal,'var(--cy)')+this.bar('Formal (fundamentación, motivación, congruencia)',vs.formal,'var(--vi)')+this.bar('De fondo (derechos fundamentales)',vs.fondo,'var(--go)')+
+   '<div class="mut" style="font-size:11.5px;margin-top:4px">Términos detectados: '+(Object.values(vs.hits).flat().map(esc).join(', ')||'—')+'</div></div>'+
+   '<div class="glass p"><h3 style="color:var(--cy);margin-bottom:6px">b) Evaluador técnico del concepto</h3><div class="flex" style="margin-bottom:8px"><span class="badge '+bc+'" style="font-size:16px">'+g.main+'</span><span class="mut" style="font-size:13px">Confianza: <b style="color:#fff">'+g.conf+'%</b></span></div>'+
+   this.bar('FUNDADO',g.FUNDADO,'var(--ok)')+this.bar('INFUNDADO',g.INFUNDADO,'var(--er)')+this.bar('INOPERANTE',g.INOPERANTE,'var(--wa)')+this.bar('INEFICAZ',g.INEFICAZ,'var(--vi)')+
+   '<div style="margin-top:8px">'+r.signals.map(s=>'<div class="sig"><i class="fa-solid '+(s.bad?(s.ok?'fa-circle-xmark':'fa-minus'):(s.ok?'fa-circle-check':'fa-circle-xmark')) +'" style="color:'+(s.bad?(s.ok?'var(--er)':'#445'):(s.ok?'var(--ok)':'#445'))+'"></i><span style="opacity:'+(s.ok?1:.5)+'">'+s.k+'</span></div>').join('')+'</div></div>'+
+   '<div class="glass p"><h3 style="color:var(--cy);margin-bottom:6px">c) Constructor de considerandos (silogismo judicial)</h3>'+
+   '<div class="prem" style="border-left:3px solid var(--go)"><b style="color:var(--go)">Premisa mayor</b> (norma vulnerada)<br>'+r.syl.mayor.map(esc).join('<br>')+'</div>'+
+   '<div class="prem" style="border-left:3px solid var(--cy)"><b style="color:var(--cy)">Premisa menor</b> (acto reclamado)<br>'+esc(r.syl.menor)+'</div>'+
+   '<div class="prem" style="border-left:3px solid var(--vi)"><b style="color:#cfdcff">Conclusión demostrativa</b><br>'+esc(r.syl.concl)+'</div>'+
+   '<div class="mut" style="font-size:11px;margin-top:6px">Referencias normativas orientativas: confirma el texto vigente.</div></div>'+
+   '<div class="glass p"><div class="flex" style="justify-content:space-between;margin-bottom:8px"><h3 style="color:var(--cy)">d) Puntos resolutivos</h3><button class="btn" id="qCopy" style="padding:6px 12px;font-size:12px"><i class="fa-solid fa-copy"></i> Copiar</button></div><div class="resol"><div style="text-align:center;font-weight:700;margin-bottom:8px">R E S U E L V E</div>'+r.res.map(x=>'<p style="margin-bottom:8px">'+esc(x)+'</p>').join('')+'</div></div>';
+  const dup=S.cases.some(c=>c.full===text.slice(0,3000));
+  if(!dup){S.cases.push({t:text.slice(0,160),full:text.slice(0,3000),q:$('#qName').value,au:$('#qAuth').value,act:$('#qAct').value,viol:vn,grade:g.main,conf:g.conf,fund:r.fund});if(S.cases.length>60)S.cases.shift();save();addXP(12,'Caso analizado con IA')}
+  Stage.balance(r.fund?1:-1);SFX.ok();this.hist();$('#qCopy').onclick=()=>copyText(r.res.join('\n\n'));
+ },
+ hist(){
+  const h=$('#qHist'),L=S.cases.slice(-6).reverse();
+  if(!L.length){h.innerHTML='<div class="mut" style="font-size:12.5px">Historial vacío</div>';return}
+  h.innerHTML='<div style="font-size:12px;color:var(--cy);font-weight:600;margin-bottom:6px">Historial</div>'+L.map((c,i)=>'<div class="org" data-h="'+(S.cases.length-1-i)+'" style="cursor:pointer"><span class="badge '+({FUNDADO:'b-ok',INFUNDADO:'b-er',INOPERANTE:'b-wa',INEFICAZ:'b-vi'}[c.grade]||'b-cy')+'">'+esc(c.grade)+'</span> '+esc(c.t.slice(0,70))+(c.t.length>70?'…':'')+'</div>').join('');
+  $$('[data-h]',h).forEach(el=>el.onclick=()=>{const c=S.cases[+el.dataset.h];if(!c)return;$('#qText').value=c.full;$('#qName').value=c.q;$('#qAuth').value=c.au;$('#qAct').value=c.act;SFX.click()});
+ },
+ gavel(){
+  const r=this.last;if(!r){toast('Primero analiza un concepto de violación.','er');SFX.err();return}
+  Stage.strike(()=>{Stage.balance(r.fund?1:-1);if(r.fund)fx({particleCount:140,spread:80,origin:{y:.6}});if(!r.dictated){r.dictated=true;addXP(8,'Sentencia dictada')}toast('<i class="fa-solid fa-gavel"></i> '+(r.fund?'Se AMPARA Y PROTEGE':'NO se ampara ni protege'),r.fund?'ok':'er')});
+ }
+};
+
+const CASES=[
+ {t:'Se ordena la demolición de una vivienda habitada sin darle audiencia al propietario, quien promueve amparo indirecto y solicita la suspensión.',o:['Conceder la suspensión provisional para preservar la materia del amparo','Negarla por afectar el interés social','Sobreseer de inmediato','Desechar la demanda de plano'],ok:0,e:'La demolición sería de ejecución irreparable: procede la suspensión (apariencia del buen derecho y peligro en la demora) sin que se siga perjuicio al interés social.'},
+ {t:'Un particular impugna una ley autoaplicativa dos años después de su entrada en vigor, sin acto de aplicación posterior.',o:['Admitir y conceder suspensión','Desechar de plano por notoria improcedencia (extemporaneidad)','Conceder el amparo','Pedir informe previo y esperar'],ok:1,e:'El plazo para impugnar una norma autoaplicativa es de 30 días; transcurrido, el consentimiento hace notoriamente improcedente la demanda.'},
+ {t:'Se promueve amparo contra una orden de deportación que se ejecutará de inmediato.',o:['Negar por no haber agotado recursos','Suspensión de oficio y de plano','Sobreseer','Declarar incompetencia'],ok:1,e:'La deportación y el destierro son actos por los que procede la suspensión de oficio y de plano, sin exigir definitividad.'},
+ {t:'Antes de la audiencia constitucional, la autoridad responsable revoca el acto reclamado y deja sin efectos sus consecuencias.',o:['Conceder el amparo','Negar el amparo','Sobreseer por cesación de efectos','Reponer el procedimiento'],ok:2,e:'Si cesan los efectos del acto y las cosas vuelven al estado anterior, procede el sobreseimiento.'},
+ {t:'En un amparo directo, los conceptos de violación solo expresan "no estoy de acuerdo con la sentencia" y reiteran la demanda.',o:['Declararlos inoperantes y negar el amparo','Declararlos fundados','Suplir la queja siempre','Reponer el procedimiento'],ok:0,e:'No combaten las razones de la sentencia ni expresan razonamiento jurídico: son inoperantes (salvo supuestos de suplencia).'},
+ {t:'Un auto de vinculación a proceso carece por completo de fundamentación y motivación.',o:['Negar el amparo por ser acto intraprocesal','Conceder el amparo para que se deje insubsistente y se emita otro debidamente fundado y motivado','Sobreseer','Desechar la demanda'],ok:1,e:'La falta de fundamentación y motivación vulnera el art. 16 constitucional: procede conceder para efectos.'},
+ {t:'En un amparo directo se advierte que el tercero interesado nunca fue emplazado al juicio de origen.',o:['Dictar sentencia sin más trámite','Ordenar reponer el procedimiento para emplazar al tercero','Negar el amparo','Sobreseer'],ok:1,e:'La falta de emplazamiento es una violación procesal grave: se repone el procedimiento para respetar el debido proceso.'},
+ {t:'El quejoso solicita suspender el cobro de un crédito fiscal.',o:['Negarla siempre','Concederla sin condición alguna','Concederla condicionada a garantizar el interés fiscal','Sobreseer'],ok:2,e:'En materia fiscal la suspensión suele condicionarse a que se garantice el interés del fisco.'}
+];
+const QUIZ=[
+ {q:'¿Contra qué procede el amparo directo?',o:['Sentencias definitivas, laudos y resoluciones que ponen fin al juicio','Leyes autoaplicativas','Omisiones de autoridad administrativa','Cualquier acto intraprocesal'],},
+ {q:'¿Qué órgano conoce, en regla general, del amparo indirecto en primera instancia?',o:['Juzgado de Distrito','Tribunal Colegiado de Circuito','Pleno de la SCJN','Consejo de la Judicatura'],},
+ {q:'¿Cuál es el plazo general para presentar la demanda de amparo?',o:['15 días','5 días','60 días','1 año'],},
+ {q:'¿Plazo para impugnar una norma general autoaplicativa?',o:['30 días','15 días','8 días','90 días'],},
+ {q:'La demanda de amparo directo se presenta…',o:['Ante la autoridad responsable','Ante el Tribunal Colegiado directamente','Ante la SCJN','Ante el Ministerio Público'],},
+ {q:'¿Quién conoce del amparo directo?',o:['Tribunales Colegiados de Circuito','Juzgados de Distrito','Tribunales de Alzada locales','Salas del TEPJF'],},
+ {q:'Principio por el cual la sentencia solo beneficia al quejoso:',o:['Relatividad de las sentencias (Fórmula Otero)','Definitividad','Estricto derecho','Litis abierta'],},
+ {q:'¿Qué recurso procede contra la sentencia de un Juzgado de Distrito en amparo indirecto?',o:['Revisión','Apelación local','Casación','Revocación'],},
+ {q:'La autoridad responsable es la que…',o:['Dicta, ordena, ejecuta o trata de ejecutar el acto reclamado','Solo emite leyes','Solo juzga amparos','Representa al quejoso'],},
+ {q:'¿Qué principio exige agotar recursos ordinarios antes de promover amparo (con excepciones)?',o:['Definitividad','Relatividad','Instancia de parte','Prosecución judicial'],},
+ {q:'El interés legítimo en amparo fue incorporado por la reforma constitucional de…',o:['2011','1917','1994','2024'],},
+ {q:'El informe justificado lo rinde…',o:['La autoridad responsable','El quejoso','El tercero interesado','El Ministerio Público únicamente'],},
+ {q:'Un concepto de violación que no ataca las razones de la sentencia es…',o:['Inoperante','Fundado','Procedente','Superveniente'],},
+ {q:'La suspensión de oficio procede, por ejemplo, ante…',o:['Peligro de privación de la vida o deportación','Cobro de una multa menor','Cambio de domicilio fiscal','Cualquier acto civil'],},
+ {q:'¿Quién puede promover amparo adhesivo?',o:['Quien obtuvo sentencia favorable y tiene interés en que subsista','Cualquier ciudadano','Solo la autoridad responsable','Únicamente el Ministerio Público'],},
+ {q:'El suplemento de la deficiencia de la queja consiste en…',o:['Corregir deficiencias de los conceptos de violación en casos previstos por la ley','Ampliar siempre el plazo','Eximir de pruebas','Cambiar de juez'],},
+ {q:'En amparo indirecto, la audiencia donde se desahogan pruebas y alegatos se llama…',o:['Audiencia constitucional','Audiencia previa','Audiencia de juicio oral','Audiencia de conciliación'],},
+ {q:'¿Quién es el tercero interesado?',o:['Quien tiene un derecho incompatible con la pretensión del quejoso','El juez de distrito','El abogado del quejoso','Un perito'],},
+ {q:'Declaratoria general de inconstitucionalidad: ¿quién la emite?',o:['La Suprema Corte de Justicia de la Nación','El Juzgado de Distrito','El Congreso estatal','La Fiscalía'],},
+ {q:'Un acto dentro de juicio de imposible reparación se combate, por regla, en…',o:['Amparo indirecto','Amparo directo inmediato siempre','Recurso de casación','No es impugnable'],}
+];
+const PZ=[
+ {nm:'Demanda de amparo',it:['Rubro y proemio: dirigida al Juez de Distrito','Nombre y domicilio del quejoso','Nombre y domicilio del tercero interesado','Autoridad responsable','Acto reclamado','Protesta de decir verdad y antecedentes','Preceptos constitucionales violados','Conceptos de violación','Puntos petitorios']},
+ {nm:'Sentencia de amparo',it:['Rubro: datos del juicio, quejoso y autoridad','RESULTANDOS: demanda, trámite e informes','CONSIDERANDO I: competencia','CONSIDERANDO II: fijación del acto reclamado','CONSIDERANDO III: certeza del acto','CONSIDERANDO IV: causas de improcedencia','CONSIDERANDO V: estudio de fondo','CONSIDERANDO VI: efectos de la concesión','RESOLUTIVOS: ampara / no ampara','Notifíquese y firmas']}
+];
+const LAB=[
+ {base:'La sentencia es injusta y no estoy de acuerdo con lo que resolvió el Juez.',cards:[
+  {t:'La responsable sostuvo en el considerando segundo que el contrato era válido.'},
+  {t:'Dicha determinación viola los artículos 14 y 16 constitucionales,'},
+  {t:'porque la responsable omitió analizar el dictamen pericial exhibido.'},
+  {t:'Como consta a fojas 112 a 118 del expediente, el dictamen pericial acredita el vicio del consentimiento.'},
+  {t:'De haberse valorado, el resultado habría variado y se habría declarado la nulidad, lo que trasciende al sentido del fallo.'},
+  {t:'Reitero lo manifestado en mi demanda inicial.',bad:1},
+  {t:'El juez está vendido y por eso me perjudicó.',bad:1},
+  {t:'Planteo por primera vez un argumento nuevo sobre la prescripción.',bad:1}]},
+ {base:'El auto reclamado me perjudica y es incorrecto.',cards:[
+  {t:'La responsable determinó que me notificó por lista, cuando correspondía notificarme personalmente.'},
+  {t:'Con ello transgredió los artículos 14 y 17 constitucionales y el 8.1 de la Convención Americana,'},
+  {t:'porque se me impidió ofrecer pruebas dentro del plazo legal.'},
+  {t:'Según se advierte de la constancia de notificación visible a foja 23 del expediente.'},
+  {t:'De haberse notificado personalmente, el resultado del fallo habría variado, lo que trasciende al sentido de la resolución.'},
+  {t:'Aun cuando me hubieran notificado correctamente, la sentencia subsiste por una razón autónoma que no combatí.',bad:1},
+  {t:'Reitero lo expuesto en mi demanda inicial.',bad:1},
+  {t:'Los jueces están vendidos y por eso me perjudican.',bad:1}]}
+];
+const Games=(()=>{
+ let mode='speed',timer=null,cur={},built=false;
+ const area=()=>$('#gameArea'),host=()=>$('#host-m3');
+ const MODES=[['speed','fa-stopwatch','Speedrun 3D'],['juez','fa-gavel','Juez Constitucional'],['puzzle','fa-puzzle-piece','Rompecabezas'],['lab','fa-flask','Lab. de Agravios'],['trivia','fa-flag','Trivia Territorial'],['exam','fa-graduation-cap','Examen final']];
+ function stopAll(){clearInterval(timer);clearTimeout(timer);timer=null;Stage.setPick(null)}
+ function enter(){
+  if(!built){built=true;$('#gTabs').innerHTML=MODES.map(m=>'<button class="gtab" data-m="'+m[0]+'"><i class="fa-solid '+m[1]+'"></i> '+m[2]+'</button>').join('');$('#gTabs').addEventListener('click',e=>{const b=e.target.closest('.gtab');if(b)setMode(b.dataset.m)})}
+  setMode(mode);
+ }
+ function setMode(m){
+  stopAll();mode=m;$$('.gtab').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  const need=['speed','juez','trivia'].includes(m);$('#m3Stage').style.display=need?'':'none';$('#gGrid').style.gridTemplateColumns=need?'':'1fr';
+  if(need)Stage.mount(host(),m==='juez'?'court':'map');Stage.clearAll();Stage.showLabels(m==='trivia');
+  ({speed,juez,puzzle,lab,trivia,exam})[m]();
+ }
+ const box=h=>'<div class="glass p">'+h+'</div>';
+
+ function speed(){
+  if(Stage.off){area().innerHTML=box('<div class="mut">El motor 3D no está disponible.</div>');return}
+  area().innerHTML=box('<h3 style="color:var(--cy)"><i class="fa-solid fa-stopwatch"></i> Speedrun 3D de Circuitos</h3><p class="mut" style="font-size:13px;margin:6px 0 12px">5 rondas de 30 s. Mejor puntaje: <b style="color:var(--go)">'+S.scores.speed+'</b></p><button class="btn btn-big" id="sgo"><i class="fa-solid fa-play"></i> Iniciar</button><div id="sinfo" style="margin-top:12px"></div>');
+  $('#sgo').onclick=startSpeed;
+ }
+ function startSpeed(){
+  cur={ids:shuffle([...Array(32)].map((_,i)=>i+1)).slice(0,5),i:0,score:0,active:false};Stage.clearAll();Stage.showLabels(false);
+  Stage.setPick(n=>{if(!cur.active)return;
+   if(n===cur.target){cur.active=false;clearInterval(timer);const left=Math.max(0,30-(Date.now()-cur.t0)/1000),pts=Math.round(100+left*4);cur.score+=pts;Stage.flash(n,'good',1400);SFX.ok();toast('+'+pts+' pts','ok');cur.i++;setTimeout(nextRound,1300)}
+   else{Stage.flash(n,'bad',700);SFX.err();cur.score=Math.max(0,cur.score-20)}});
+  nextRound();
+ }
+ function nextRound(){
+  if(cur.i>=5)return endSpeed();
+  const c=C[cur.ids[cur.i]-1],k=rnd(3);cur.target=c.n;cur.t0=Date.now();cur.active=true;Stage.clearAll();
+  const q=k===0?'Circuito N.° <b>'+c.n+'</b>':k===1?'Circuito con sede en <b>'+esc(c.s)+'</b>':'Circuito de <b>'+esc(c.e)+'</b>';
+  $('#sinfo').innerHTML='<div class="flex" style="justify-content:space-between"><b>Ronda '+(cur.i+1)+'/5</b><b style="color:var(--go)">'+cur.score+' pts</b></div><div style="font-size:20px;margin:12px 0">'+q+'</div><div class="bar"><i id="stm" style="width:100%;background:linear-gradient(90deg,var(--ok),var(--wa),var(--er))"></i></div><div id="stmt" class="mut" style="font-size:12px;margin-top:4px">30.0 s</div>';
+  clearInterval(timer);timer=setInterval(()=>{const left=30-(Date.now()-cur.t0)/1000;if(left<=0){clearInterval(timer);cur.active=false;Stage.showLabels(false);Stage.flash(cur.target,'good',2200);SFX.err();toast('Tiempo agotado: era el circuito '+cur.target,'er');cur.i++;setTimeout(nextRound,2000);return}
+   const b=$('#stm');if(b){b.style.width=(left/30*100)+'%';$('#stmt').textContent=left.toFixed(1)+' s'}if(left<6)SFX.tick()},200);
+ }
+ function endSpeed(){
+  const sc=cur.score;if(sc>S.scores.speed)S.scores.speed=sc;save();if(sc>400)fx({particleCount:150,spread:90});addXP(Math.max(5,Math.round(sc/40)),'Speedrun completado');
+  $('#sinfo').innerHTML='<div style="font-size:20px">Puntaje final: <b style="color:var(--go)">'+sc+'</b></div><p class="mut" style="font-size:13px;margin:6px 0 10px">Mejor: '+S.scores.speed+'</p><button class="btn" onclick="Games.setMode(\'speed\')"><i class="fa-solid fa-rotate"></i> Reintentar</button>';
+ }
+
+ function juez(){cur={order:shuffle(CASES),i:0,score:0};caseR()}
+ function caseR(){
+  if(cur.i>=cur.order.length){S.scores.juez=Math.max(S.scores.juez,cur.score);save();fx({particleCount:120,spread:80});area().innerHTML=box('<h3 style="color:var(--go)">Sesión concluida</h3><p style="margin:8px 0">Puntos: <b>'+cur.score+'</b> · Mejor: '+S.scores.juez+'</p><button class="btn" onclick="Games.setMode(\'juez\')"><i class="fa-solid fa-rotate"></i> Nueva sesión</button>');return}
+  const k=cur.order[cur.i],idx=shuffle([0,1,2,3]);
+  area().innerHTML=box('<div class="flex" style="justify-content:space-between"><h3 style="color:var(--cy)"><i class="fa-solid fa-gavel"></i> Simulador de Juez Constitucional</h3><b style="color:var(--go)">'+cur.score+' pts</b></div><div class="mut" style="font-size:12px;margin:4px 0">Caso '+(cur.i+1)+'/'+cur.order.length+'</div><div class="quote">'+esc(k.t)+'</div><div style="margin-top:8px;font-weight:600">¿Qué resuelves?</div>'+idx.map(i=>'<button class="opt" data-i="'+i+'">'+esc(k.o[i])+'</button>').join('')+'<div id="cfb"></div>');
+  $$('.opt',area()).forEach(b=>b.onclick=()=>{
+   const oi=+b.dataset.i,ok=oi===k.ok;$$('.opt',area()).forEach(x=>{x.disabled=true;if(+x.dataset.i===k.ok)x.classList.add('good')});if(!ok)b.classList.add('bad');
+   const fin=()=>{$('#cfb').innerHTML='<div class="prem" style="border-left:3px solid '+(ok?'var(--ok)':'var(--er)')+'"><b>'+(ok?'¡Correcto!':'Incorrecto.')+'</b> '+esc(k.e)+'</div><button class="btn" id="cnx" style="margin-top:10px">Siguiente <i class="fa-solid fa-arrow-right"></i></button>';$('#cnx').onclick=()=>{cur.i++;caseR()}};
+   if(ok){Stage.strike(()=>{Stage.balance(1);cur.score+=100;fx({particleCount:70,spread:60,origin:{x:.3,y:.6}});addXP(15,'Resolución acertada');fin()})}
+   else{Stage.balance(-1);SFX.err();fin()}
+  });
+ }
+
+ function puzzle(){cur={p:0};pzR(0)}
+ function pzR(pi){
+  const P=PZ[pi];cur.p=pi;cur.items=shuffle(P.it.map((t,i)=>({t,i})));cur.checked=false;
+  area().innerHTML=box('<h3 style="color:var(--cy)"><i class="fa-solid fa-puzzle-piece"></i> Rompecabezas de Sentencia</h3><div class="flex" style="margin:8px 0">'+PZ.map((p,i)=>'<button class="chip '+(i===pi?'on':'')+'" data-p="'+i+'">'+p.nm+'</button>').join('')+'</div><p class="mut" style="font-size:12.5px">Ordena los bloques del documento. Mejor puntaje: <b style="color:var(--go)">'+S.scores.puzzle+'</b></p><div id="pzl"></div><div class="flex" style="margin-top:12px"><button class="btn btn-ok" id="pzc"><i class="fa-solid fa-check"></i> Comprobar</button><button class="btn" id="pzs"><i class="fa-solid fa-shuffle"></i> Barajar</button></div><div id="pzf" style="margin-top:10px"></div>');
+  $$('[data-p]',area()).forEach(b=>b.onclick=()=>pzR(+b.dataset.p));$('#pzs').onclick=()=>pzR(pi);$('#pzc').onclick=pzCheck;pzList();
+ }
+ function pzList(){
+  const L=$('#pzl');L.innerHTML=cur.items.map((o,k)=>'<div class="pz '+(cur.checked?(o.i===k?'good':'bad'):'')+'" draggable="true" data-k="'+k+'"><span class="h"><i class="fa-solid fa-grip-vertical"></i></span><span style="flex:1">'+esc(o.t)+'</span><button class="ibtn" style="width:28px;height:28px" data-u="'+k+'">▲</button><button class="ibtn" style="width:28px;height:28px" data-d="'+k+'">▼</button></div>').join('');
+  let dr=-1;const mv=(a,b)=>{if(a===b||b<0||b>=cur.items.length)return;const[x]=cur.items.splice(a,1);cur.items.splice(b,0,x);cur.checked=false;SFX.click();pzList()};
+  $$('.pz',L).forEach(el=>{const k=+el.dataset.k;el.ondragstart=e=>{dr=k;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(k))}catch(x){}};el.ondragover=e=>{e.preventDefault();el.classList.add('over')};el.ondragleave=()=>el.classList.remove('over');el.ondrop=e=>{e.preventDefault();mv(dr,k)}});
+  $$('[data-u]',L).forEach(b=>b.onclick=()=>mv(+b.dataset.u,+b.dataset.u-1));$$('[data-d]',L).forEach(b=>b.onclick=()=>mv(+b.dataset.d,+b.dataset.d+1));
+ }
+ function pzCheck(){
+  cur.checked=true;pzList();const ok=cur.items.filter((o,k)=>o.i===k).length,n=cur.items.length,sc=ok*12+(ok===n?50:0);
+  const prev=S.scores.puzzle;
+  if(sc>prev){S.scores.puzzle=sc;save();addXP(Math.max(1,Math.round((sc-prev)/4)),ok===n?'Documento armado a la perfección':'Mejor puntaje en el rompecabezas')}
+  if(ok===n){fx({particleCount:160,spread:90});SFX.ok()}else SFX.err();
+  $('#pzf').innerHTML='<div class="prem" style="border-left:3px solid '+(ok===n?'var(--ok)':'var(--wa)')+'">'+ok+' de '+n+' bloques en su lugar · '+sc+' pts'+(ok===n?' — ¡Orden perfecto!':'. Los bloques en rojo están mal ubicados.')+'</div>';
+ }
+
+ function lab(){cur={l:0};labR(0)}
+ function labR(li){
+  const L=LAB[li];cur.l=li;cur.sel=[];cur.won=false;
+  area().innerHTML=box('<h3 style="color:var(--cy)"><i class="fa-solid fa-flask"></i> Laboratorio de Conversión de Agravios</h3><div class="flex" style="margin:8px 0">'+LAB.map((p,i)=>'<button class="chip '+(i===li?'on':'')+'" data-l="'+i+'">Caso '+(i+1)+'</button>').join('')+'</div><p class="mut" style="font-size:12.5px"><span class="badge b-wa">INOPERANTE</span> → <span class="badge b-ok">FUNDADO</span></p><div class="quote" id="lbT" style="margin:10px 0"></div><div class="flex" id="lbS" style="margin-bottom:6px"></div><div id="lbC"></div><button class="btn" id="lbR" style="margin-top:10px"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>');
+  $$('[data-l]',area()).forEach(b=>b.onclick=()=>labR(+b.dataset.l));$('#lbR').onclick=()=>labR(li);
+  $('#lbC').innerHTML=shuffle(L.cards.map((c,i)=>i)).map(i=>'<div class="card" data-c="'+i+'">'+esc(L.cards[i].t)+'</div>').join('');
+  $$('.card',area()).forEach(el=>el.onclick=()=>{const i=+el.dataset.c,p=cur.sel.indexOf(i);if(p>=0){cur.sel.splice(p,1);el.classList.remove('used')}else{cur.sel.push(i);el.classList.add('used')}SFX.click();labEval()});
+  labEval();
+ }
+ function labEval(){
+  const L=LAB[cur.l],txt=[L.base].concat(cur.sel.map(i=>L.cards[i].t)).join(' '),r=AI.analyze(txt),g=r.grade,bc={FUNDADO:'b-ok',INFUNDADO:'b-er',INOPERANTE:'b-wa',INEFICAZ:'b-vi'}[g.main];
+  $('#lbT').textContent=txt;$('#lbS').innerHTML='<span class="badge '+bc+'" style="font-size:15px">'+g.main+'</span><span class="mut" style="font-size:12.5px">Confianza '+g.conf+'% · Fundado '+g.FUNDADO+'%</span>';
+  const won=g.main==='FUNDADO'&&g.FUNDADO>=60;
+  if(won&&!cur.won){cur.won=true;fx({particleCount:160,spread:90});SFX.ok();if(S.labSolved.indexOf(cur.l)<0){S.labSolved.push(cur.l);S.scores.lab=S.labSolved.length;save();addXP(30,'Agravio convertido a FUNDADO')}}
+  if(!won)cur.won=false;
+ }
+
+ function trivia(){
+  Stage.setPick(null);cur={order:shuffle(QUIZ),i:0,ok:0};Stage.showLabels(true);triR();
+ }
+ function triR(){
+  if(cur.i>=cur.order.length){cur.order=shuffle(QUIZ);cur.i=0}
+  const q=cur.order[cur.i],opts=shuffle(q.o.map((t,i)=>({t,ok:i===0})));
+  area().innerHTML=box('<div class="flex" style="justify-content:space-between"><h3 style="color:var(--cy)"><i class="fa-solid fa-flag"></i> Trivia de Conquista Territorial</h3><b style="color:var(--ok)">'+S.conq.length+'/32 conquistados</b></div><div class="bar" style="margin:8px 0"><i style="width:'+(S.conq.length/32*100)+'%;background:var(--ok);box-shadow:0 0 8px var(--ok)"></i></div><div class="quote">'+esc(q.q)+'</div>'+opts.map((o,i)=>'<button class="opt" data-ok="'+(o.ok?1:0)+'">'+esc(o.t)+'</button>').join('')+'<div id="tfb"></div><button class="btn btn-er" id="trs" style="margin-top:14px;font-size:12px"><i class="fa-solid fa-trash"></i> Reiniciar conquista</button>');
+  $('#trs').onclick=()=>{S.conq=[];save();Stage.clearAll();triR()};
+  $$('.opt',area()).forEach(b=>b.onclick=()=>{
+   $$('.opt',area()).forEach(x=>{x.disabled=true;if(x.dataset.ok==='1')x.classList.add('good')});
+   if(b.dataset.ok==='1'){
+    const free=C.filter(c=>S.conq.indexOf(c.n)<0);let msg='';
+    if(free.length){const c=free[rnd(free.length)];S.conq.push(c.n);save();Stage.flash(c.n,'good',1800);msg='¡Conquistaste el Circuito '+c.n+' ('+esc(c.e)+')!';addXP(8,'Territorio conquistado');SFX.ok();if(S.conq.length===32){fx({particleCount:300,spread:140});toast('<i class="fa-solid fa-crown"></i> ¡Conquista total de los 32 circuitos!','go')}}
+    else msg='Ya conquistaste todo el territorio.';
+    S.scores.trivia=Math.max(S.scores.trivia,S.conq.length);cur.ok++;save();
+    $('#tfb').innerHTML='<div class="prem" style="border-left:3px solid var(--ok)"><b>¡Correcto!</b> '+msg+'</div><button class="btn" id="tnx" style="margin-top:10px">Siguiente <i class="fa-solid fa-arrow-right"></i></button>';
+   }else{b.classList.add('bad');SFX.err();$('#tfb').innerHTML='<div class="prem" style="border-left:3px solid var(--er)"><b>Incorrecto.</b> Se marcó la respuesta correcta; inténtalo con la siguiente.</div><button class="btn" id="tnx" style="margin-top:10px">Siguiente <i class="fa-solid fa-arrow-right"></i></button>'}
+   $('#tnx').onclick=()=>{cur.i++;triR()};
+  });
+ }
+
+ function exam(){cur={q:shuffle(QUIZ).slice(0,10),i:0,ok:0};exR()}
+ function exR(){
+  if(cur.i>=cur.q.length){
+   const sc=cur.ok,prev=S.scores.exam,lb=sc>=9?'Sobresaliente':sc>=8?'Aprobado':sc>=6?'Suficiente':'No acreditado';
+   if(sc>prev){S.scores.exam=sc;save();addXP((sc-prev)*3,'Examen final')}
+   if(sc>=8){fx({particleCount:160,spread:90});SFX.ok()}else SFX.err();
+   area().innerHTML=box('<h3 style="color:var(--go)">Resultado del examen</h3><div style="font-size:34px;font-weight:800;margin:8px 0">'+sc+' / '+cur.q.length+'</div><span class="badge '+(sc>=8?'b-ok':sc>=6?'b-wa':'b-er')+'">'+lb+'</span><p class="mut" style="font-size:13px;margin:10px 0">Mejor resultado: '+S.scores.exam+' / 10</p><button class="btn" id="exr"><i class="fa-solid fa-rotate"></i> Nuevo examen</button>');
+   $('#exr').onclick=()=>setMode('exam');return}
+  const q=cur.q[cur.i],opts=shuffle(q.o.map((t,i)=>({t,ok:i===0})));
+  area().innerHTML=box('<div class="flex" style="justify-content:space-between"><h3 style="color:var(--cy)"><i class="fa-solid fa-graduation-cap"></i> Examen final</h3><b>'+(cur.i+1)+'/'+cur.q.length+'</b></div><div class="bar" style="margin:8px 0"><i style="width:'+(cur.i/cur.q.length*100)+'%;background:var(--cy)"></i></div><div class="quote">'+esc(q.q)+'</div>'+opts.map(o=>'<button class="opt" data-ok="'+(o.ok?1:0)+'">'+esc(o.t)+'</button>').join(''));
+  $$('.opt',area()).forEach(b=>b.onclick=()=>{
+   $$('.opt',area()).forEach(x=>{x.disabled=true;if(x.dataset.ok==='1')x.classList.add('good')});
+   if(b.dataset.ok==='1'){cur.ok++;SFX.ok()}else{b.classList.add('bad');SFX.err()}
+   clearTimeout(timer);timer=setTimeout(()=>{cur.i++;exR()},1000);
+  });
+ }
+ return{enter,stopAll,setMode};
+})();
+
+const FIX={'01-01':'Año Nuevo','02-05':'5 de febrero','03-21':'21 de marzo','05-01':'Día del Trabajo','05-05':'5 de mayo','09-14':'14 de septiembre','09-16':'Independencia','10-12':'12 de octubre','11-20':'20 de noviembre','12-25':'Navidad'};
+const MX=[
+ ['Procedencia','Contra sentencias definitivas, laudos y resoluciones que ponen fin al juicio, dictados por tribunales judiciales, administrativos o del trabajo (art. 170 LA).','Contra normas generales, actos u omisiones de autoridades administrativas, actos de tribunales fuera de juicio o después de concluido, y actos dentro de juicio de imposible reparación, entre otros (art. 107 LA).'],
+ ['Vía / presentación','La demanda se presenta por conducto de la autoridad responsable, que la remite al tribunal competente (art. 176 LA).','La demanda se presenta directamente ante el Juzgado de Distrito competente.'],
+ ['Órgano competente','Tribunal Colegiado de Circuito (la SCJN conoce excepcionalmente).','Juzgado de Distrito; en ciertos casos, Tribunal Colegiado de Apelación (antes Unitario de Circuito).'],
+ ['Suspensión','La decide la propia autoridad responsable; en materia penal opera en términos de libertad personal.','La concede el Juez de Distrito: de oficio, o a petición de parte (provisional y definitiva, mediante incidente).'],
+ ['Plazos','15 días (general); hasta 8 años en sentencia condenatoria que imponga pena de prisión (art. 17 LA).','15 días (general); 30 días en norma autoaplicativa o extradición; en cualquier tiempo en ataques a la libertad personal fuera de procedimiento, desaparición forzada, etc. (art. 17 LA).'],
+ ['Etapas / pruebas','Se resuelve en estudio de constancias: no hay etapa probatoria ni audiencia constitucional.','Informe justificado, ofrecimiento de pruebas y audiencia constitucional.'],
+ ['Recursos','Revisión ante la SCJN solo si subsiste un problema de constitucionalidad de importancia y trascendencia (art. 81 LA).','Revisión (10 días) ante el Tribunal Colegiado o la SCJN, según el caso (arts. 81 y 86 LA).'],
+ ['Definitividad','Debe agotarse el recurso ordinario; las violaciones procesales deben prepararse durante el juicio.','Rige la definitividad con las excepciones legales (p. ej. actos que afectan libertad, vida o terceros extraños).']
+];
+const M4={built:false,grp:'Todos',
+ enter(){if(this.built)return;this.built=true;
+  $('#cDate').value=dkey(new Date());$('#cGo').onclick=()=>this.calc();$('#cAddEx').onclick=()=>{const v=$('#cExtra').value;if(v&&S.extra.indexOf(v)<0){S.extra.push(v);save();this.exl()}};this.exl();
+  $('#mxChips').innerHTML=['Todos'].concat(MX.map(r=>r[0])).map(g=>'<span class="chip '+(g==='Todos'?'on':'')+'" data-g="'+g+'">'+g+'</span>').join('');
+  $('#mxChips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;this.grp=c.dataset.g;$$('#mxChips .chip').forEach(x=>x.classList.toggle('on',x===c));this.mx()};$('#mxSearch').oninput=()=>this.mx();this.mx();},
+ exl(){$('#cExList').innerHTML=S.extra.map(d=>'<span class="chip on" data-x="'+d+'" title="Quitar">'+d+' ✕</span>').join('');$$('#cExList .chip').forEach(c=>c.onclick=()=>{S.extra=S.extra.filter(x=>x!==c.dataset.x);save();this.exl()})},
+ mx(){const q=AI.norm($('#mxSearch').value);const rows=MX.filter(r=>(this.grp==='Todos'||r[0]===this.grp)&&(!q||AI.norm(r.join(' ')).includes(q)));
+  $('#mxTbl').innerHTML='<tr><th>Criterio</th><th>Amparo directo</th><th>Amparo indirecto</th></tr>'+(rows.length?rows.map(r=>'<tr><td><b>'+r[0]+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>').join(''):'<tr><td colspan="3" class="mut">Sin coincidencias.</td></tr>')},
+ reason(d,vac){const w=d.getDay();if(w===0)return'Domingo';if(w===6)return'Sábado';const k=pad(d.getMonth()+1)+'-'+pad(d.getDate());if(FIX[k])return FIX[k];if(vac){const m=d.getMonth()+1,dd=d.getDate();if(m===7&&dd>=16)return'Vacaciones (julio)';if(m===12&&dd>=16)return'Vacaciones (diciembre)'}if(S.extra.indexOf(dkey(d))>=0)return'Inhábil adicional';return null},
+ compute(start,term,eff,vac){
+  const days=[],eD=new Date(start);eD.setDate(eD.getDate()+eff);let venc,label;
+  if(term==='8a'){venc=new Date(eD);venc.setFullYear(venc.getFullYear()+8);let g=0;while(this.reason(venc,false)&&g++<10){days.push({d:new Date(venc),r:this.reason(venc,false)});venc.setDate(venc.getDate()+1)}label='8 años naturales'}
+  else{const N=+term;let c=0,d=new Date(eD),g=0;while(c<N&&g++<800){d=new Date(d);d.setDate(d.getDate()+1);const r=this.reason(d,vac);if(r)days.push({d:new Date(d),r});else{c++;days.push({d:new Date(d),n:c})}}venc=d;label=N+' días hábiles'}
+  return{venc,days,eD,label};
+ },
+ calc(){
+  const v=$('#cDate').value;if(!v){toast('Elige la fecha de notificación.','er');return}
+  const start=parseD(v),term=$('#cTerm').value,eff=+$('#cEff').value,vac=$('#cVac').checked,R=this.compute(start,term,eff,vac),venc=R.venc,days=R.days,eD=R.eD,label=R.label;
+  const t0=new Date();t0.setHours(0,0,0,0);const diff=Math.round((venc-t0)/864e5);
+  const st=diff<0?'<span class="badge b-er">VENCIDO hace '+(-diff)+' día(s)</span>':diff===0?'<span class="badge b-wa">VENCE HOY</span>':'<span class="badge b-ok">Faltan '+diff+' día(s) naturales</span>';
+  const all=['3','5','8','10','15','30'].map(t=>'<tr><td>'+t+' días hábiles</td><td>'+esc(fmtD(this.compute(start,t,eff,vac).venc))+'</td></tr>').join('');
+  $('#cOut').innerHTML='<div class="glass p" style="border-color:var(--go)"><div class="mut" style="font-size:12px">Notificación: '+fmtD(start)+' · surte efectos: '+fmtD(eD)+'</div><div style="font-size:20px;margin:8px 0;color:var(--go);font-weight:800">'+fmtD(venc)+'</div><div class="flex">'+st+'<span class="badge b-cy">'+label+'</span><button class="btn btn-gold" id="cIcs" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-bell"></i> Agregar al calendario (.ics)</button></div></div>'+
+   '<div style="margin-top:10px">'+days.map(x=>{const last=x.n&&x.d.getTime()===venc.getTime();return'<span class="dayb '+(x.n?(last?'v':'c'):'s')+'" title="'+esc(x.r||'Día hábil')+'"><b>'+pad(x.d.getDate())+'/'+pad(x.d.getMonth()+1)+'</b><span>'+(x.n?'día '+x.n:esc(x.r).slice(0,9))+'</span></span>'}).join('')+'</div>'+
+   '<table class="tbl" style="margin-top:12px"><tr><th>Otros plazos desde esta fecha</th><th>Vencimiento</th></tr>'+all+'</table>'+
+   '<p class="mut" style="font-size:11.5px;margin-top:8px"><i class="fa-solid fa-circle-info" style="color:var(--wa)"></i> Cálculo didáctico (arts. 17 a 19 de la Ley de Amparo): excluye sábados, domingos y días inhábiles de la lista; añade los adicionales que apliquen según los acuerdos vigentes del Poder Judicial de la Federación.</p>';
+  $('#cIcs').onclick=()=>this.ics(venc,label);
+  S.calc.push({n:fmtD(start),p:label,v:fmtD(venc)});if(S.calc.length>12)S.calc.shift();save();SFX.ok();
+ },
+ ics(venc,label){
+  const f=d=>d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()),nx=new Date(venc);nx.setDate(nx.getDate()+1);
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const body=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Plazos de amparo//ES','BEGIN:VEVENT','UID:'+stamp+'-'+f(venc)+'@plazos','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+f(venc),'DTEND;VALUE=DATE:'+f(nx),'SUMMARY:Vencimiento de plazo ('+label+')','BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:El plazo vence mañana','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  dl('vencimiento.ics',body,'text/calendar');
+ }
+};
+
+const M5={
+ html(){
+  const st={n:$('#rName').value,m:$('#rSub').value,g:$('#rGrp').value,d:$('#rTch').value};S.stu=st;save();
+  const t=(h,rows)=>'<table><tr>'+h.map(x=>'<th>'+x+'</th>').join('')+'</tr>'+(rows.length?rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="'+h.length+'"><i>Sin registros en esta sesión.</i></td></tr>')+'</table>';
+  const ex=S.explored.slice().sort((a,b)=>a-b).map(n=>[n,C[n-1].e,C[n-1].s]);
+  const cs=S.cases.map((c,i)=>[i+1,c.t.slice(0,90)+(c.t.length>90?'…':''),c.viol,c.grade,c.conf+'%',c.fund?'Ampara':'No ampara']);
+  const sc=[['Speedrun 3D de Circuitos (mejor)',S.scores.speed],['Simulador de Juez Constitucional (mejor)',S.scores.juez],['Rompecabezas de Sentencia (mejor)',S.scores.puzzle],['Laboratorio de Agravios: casos resueltos',S.labSolved.length+'/'+LAB.length],['Trivia: circuitos conquistados',S.conq.length+'/32'],['Examen final (mejor)',S.scores.exam+'/10'],['Glosario: términos aprendidos',S.learned.length+'/'+GLOS.length]];
+  return'<h1>FICHA TÉCNICA LEGAL</h1><p style="margin:6px 0"><b>Simulador de Amparo MX — Reporte de sesión</b></p>'+
+   t(['Alumno','Materia','Grupo','Docente','Fecha'],[[st.n||'—',st.m||'—',st.g||'—',st.d||'—',new Date().toLocaleString('es-MX')]])+
+   '<h2>1. Resumen</h2><p>Rango alcanzado: <b>'+esc(lvl().name)+'</b> · XP: <b>'+S.xp+'</b> · Racha: '+S.streak+' día(s) · Circuitos explorados: '+S.explored.length+'/32 · Casos analizados: '+S.cases.length+'.</p>'+
+   '<h2>2. Circuitos judiciales explorados</h2>'+t(['N.°','Entidad','Sede principal'],ex)+
+   '<h2>3. Casos analizados con el Asistente de IA</h2>'+t(['#','Extracto','Tipo de violación','Calificación','Confianza','Sentido'],cs)+
+   '<h2>4. Puntajes de juego</h2>'+t(['Modo','Resultado'],sc)+
+   '<h2>5. Plazos calculados</h2>'+t(['Notificación','Plazo','Vencimiento'],S.calc.map(c=>[c.n,c.p,c.v]))+
+   '<h2>6. Insignias obtenidas</h2><p>'+(S.badges.length?BADGES.filter(b=>S.badges.indexOf(b[0])>=0).map(b=>esc(b[2])).join(' · '):'<i>Sin insignias aún.</i>')+'</p>'+
+   '<p style="margin-top:14px;font-size:11px;color:#444"><i>Nota: documento académico generado con un motor didáctico de reglas, no con un modelo jurídico oficial. Los datos de sedes y plazos son referenciales; verifíquelos en la DGGJ ('+esc(DGGJ)+') y en la Ley de Amparo vigente.</i></p>';
+ },
+ gen(){$('#rName').value=S.stu.n||'';$('#rSub').value=S.stu.m||'';$('#rGrp').value=S.stu.g||'';$('#rTch').value=S.stu.d||'';$('#reportDoc').innerHTML=this.html()},
+ init(){
+  $('#rGen').onclick=()=>{$('#reportDoc').innerHTML=this.html();toast('Reporte actualizado','ok');SFX.ok()};
+  $('#rPrint').onclick=()=>{$('#reportDoc').innerHTML=this.html();setTimeout(()=>window.print(),100)};
+  $('#rDl').onclick=()=>{const doc='<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Ficha Técnica Legal</title><style>body{font-family:Georgia,serif;font-size:13px;margin:30px;color:#111}h1{color:#0a2a55;border-bottom:3px solid #0a2a55}h2{color:#0a2a55;font-size:15px;margin-top:16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:4px 7px;font-size:12px;text-align:left;vertical-align:top}th{background:#e6eefc}</style></head><body>'+this.html()+'</body></html>';
+   dl('ficha-tecnica-legal.html',doc,'text/html')};
+ }
+};
+
+const GLOS=[
+['Partes','Quejoso','Persona que promueve el amparo porque estima que un acto de autoridad o una norma general viola sus derechos humanos y le causa una afectación en su esfera jurídica.'],
+['Partes','Tercero interesado','Quien tiene un derecho incompatible con la pretensión del quejoso y por ello puede intervenir para defender que subsista el acto reclamado.'],
+['Partes','Autoridad responsable','La que dicta, ordena, ejecuta o trata de ejecutar el acto reclamado, o la que omite el acto que, de realizarse, crearía, modificaría o extinguiría situaciones jurídicas.'],
+['Partes','Ministerio Público de la Federación','Parte en el juicio de amparo que vela por la observancia de la legalidad y puede interponer los recursos que la ley le concede.'],
+['Principios','Relatividad de la sentencia','La sentencia solo ampara y protege a quien promovió el juicio; no hace declaraciones generales sobre la norma o el acto (Fórmula Otero).'],
+['Principios','Definitividad','Antes de acudir al amparo deben agotarse los recursos ordinarios que puedan modificar o revocar el acto, salvo las excepciones previstas en la ley.'],
+['Principios','Instancia de parte agraviada','El juicio de amparo se inicia únicamente a petición de quien resiente la afectación por el acto reclamado.'],
+['Principios','Estricto derecho','El juzgador se limita a estudiar los conceptos de violación o agravios expuestos, sin poder subsanar sus deficiencias, salvo que proceda la suplencia.'],
+['Principios','Suplencia de la queja','Facultad del órgano de amparo para corregir o completar los argumentos del quejoso en los casos que la ley lo permite, por ejemplo en favor de personas menores de edad o de la persona acusada en materia penal.'],
+['Principios','Principio pro persona','Las normas de derechos humanos se interpretan favoreciendo en todo tiempo la protección más amplia a las personas (art. 1 constitucional).'],
+['Principios','Interés jurídico','Derecho subjetivo protegido por el orden jurídico que resulta afectado por el acto reclamado.'],
+['Principios','Interés legítimo','Interés individual o colectivo, cualificado, actual y real, que deriva de la situación del quejoso frente al orden jurídico y que se afecta por el acto reclamado, aunque no exista un derecho subjetivo en sentido estricto.'],
+['Trámite','Acto reclamado','Acto, omisión o norma general de autoridad que el quejoso estima violatorio de sus derechos y que impugna mediante el amparo.'],
+['Trámite','Concepto de violación','Argumento con el que el quejoso expone por qué el acto reclamado vulnera sus derechos humanos o la ley.'],
+['Trámite','Informe justificado','Documento con el que la autoridad responsable defiende la constitucionalidad o legalidad del acto reclamado y, en su caso, remite las constancias.'],
+['Trámite','Prevención','Requerimiento del órgano jurisdiccional para que se aclare o complete una demanda con irregularidades u omisiones.'],
+['Trámite','Suspensión del acto reclamado','Medida cautelar que preserva la materia del amparo y evita daños de difícil reparación mientras se resuelve el juicio; en amparo indirecto puede ser provisional y definitiva.'],
+['Trámite','Suspensión de oficio','La que se decreta sin que el quejoso la solicite en actos de especial gravedad, como peligro de privación de la vida, deportación o destierro, entre otros.'],
+['Trámite','Audiencia constitucional','Diligencia del amparo indirecto en la que se desahogan pruebas, se formulan alegatos y, en su caso, se dicta sentencia.'],
+['Trámite','Causas de improcedencia','Supuestos legales por los cuales el juicio no puede analizarse en el fondo, por ejemplo la falta de interés, la extemporaneidad o la cosa juzgada.'],
+['Trámite','Sobreseimiento','Terminación del juicio sin estudiar el fondo por actualizarse una causa legal, como el desistimiento o la cesación de efectos del acto.'],
+['Trámite','Violación procesal','Vicio ocurrido durante el procedimiento de origen que deja sin defensa a una parte y puede trascender al resultado del fallo.'],
+['Trámite','Amparo directo','Medio de control que se promueve ante tribunales colegiados contra sentencias definitivas, laudos y resoluciones que ponen fin al juicio.'],
+['Trámite','Amparo indirecto','Se promueve ante juzgados de distrito, entre otros casos, contra normas generales, actos de autoridades administrativas y actos de tribunales fuera de juicio o dentro de él con ejecución irreparable.'],
+['Trámite','Amparo adhesivo','Medio por el cual quien obtuvo sentencia favorable en el juicio de origen puede defender, en el amparo directo, que subsista el fallo.'],
+['Trámite','Competencia por atracción','Facultad de la Suprema Corte de conocer asuntos de otros órganos cuando por su interés y trascendencia lo amerite.'],
+['Sentencia','Resultando','Apartado de la sentencia que narra los antecedentes: demanda, trámite, informes y pruebas.'],
+['Sentencia','Considerando','Parte de la sentencia donde se exponen los razonamientos y fundamentos que sustentan la decisión.'],
+['Sentencia','Puntos resolutivos','Conclusiones de la sentencia que determinan si se ampara, se niega o se sobresee, y sus efectos.'],
+['Sentencia','Concepto fundado','Argumento correcto jurídicamente que demuestra la violación alegada con trascendencia al fallo.'],
+['Sentencia','Concepto infundado','Argumento que carece de sustento en el derecho o en los hechos del caso.'],
+['Sentencia','Concepto inoperante','Argumento que no combate las razones esenciales de la resolución, es repetitivo o introduce cuestiones novedosas, por lo que no se estudia.'],
+['Sentencia','Concepto ineficaz','Argumento que, aun siendo cierto, no puede cambiar el sentido de la resolución porque subsisten razones no combatidas.'],
+['Sentencia','Efectos de la concesión','Obligan a restituir al quejoso en el pleno goce del derecho violado, restableciendo las cosas al estado anterior o cumpliendo lo que el derecho exija.'],
+['Sentencia','Cosa juzgada','Calidad de una resolución que ya no puede modificarse por medios ordinarios de impugnación.'],
+['Recursos y criterios','Recurso de revisión','Medio de impugnación contra sentencias de amparo indirecto y, de forma excepcional, de amparo directo cuando subsiste un problema de constitucionalidad relevante.'],
+['Recursos y criterios','Recurso de queja','Medio para impugnar ciertos actos del trámite o de ejecución en el juicio de amparo, en los supuestos legales.'],
+['Recursos y criterios','Recurso de reclamación','Medio contra acuerdos de trámite dictados por la presidencia de un órgano colegiado.'],
+['Recursos y criterios','Jurisprudencia','Criterio obligatorio establecido por los órganos facultados del Poder Judicial de la Federación mediante reiteración, contradicción o sustitución.'],
+['Recursos y criterios','Declaratoria general de inconstitucionalidad','Procedimiento por el cual la Suprema Corte, tras jurisprudencia por reiteración que declara inconstitucional una norma, puede emitir una declaratoria con efectos generales.'],
+['Recursos y criterios','Control de convencionalidad','Análisis que verifica que las normas y los actos sean compatibles con los tratados de derechos humanos de los que México es parte.']
+];
+const STEPS={
+ ind:[
+  ['Presentación de la demanda','Escrito ante el Juzgado de Distrito con los requisitos legales: datos del quejoso y del tercero interesado, autoridad responsable, acto reclamado, protesta de decir verdad, antecedentes, derechos violados y conceptos de violación.','Plazo general: 15 días'],
+  ['Admisión, prevención o desechamiento','El juez revisa la demanda: si hay irregularidades la previene; si hay causa manifiesta e indudable de improcedencia la desecha; en otro caso la admite, emplaza y pide informes.','Prevención: 5 días'],
+  ['Incidente de suspensión','Se tramita por cuerda separada: el juez puede conceder la suspensión provisional y, tras la audiencia incidental, resolver sobre la definitiva.',''],
+  ['Informes justificados','Las autoridades responsables rinden su informe con justificación y remiten las constancias del acto reclamado.','15 días'],
+  ['Audiencia constitucional','Se desahogan pruebas, se formulan alegatos y se dicta sentencia. Se fija dentro de los treinta días siguientes a la admisión.','30 días'],
+  ['Sentencia','El juez concede el amparo, lo niega o sobresee el juicio.',''],
+  ['Recurso de revisión','Las partes pueden impugnar la sentencia ante el Tribunal Colegiado o, en casos excepcionales, ante la Suprema Corte.','10 días'],
+  ['Cumplimiento y ejecución','La autoridad debe cumplir la sentencia; si no lo hace pueden promoverse los incidentes y medios previstos para lograr su cumplimiento.','']
+ ],
+ dir:[
+  ['Presentación de la demanda','Se presenta por conducto de la autoridad responsable que dictó la sentencia, laudo o resolución que puso fin al juicio.','Plazo general: 15 días'],
+  ['Remisión al tribunal','La autoridad responsable envía la demanda, el informe y las constancias al Tribunal Colegiado de Circuito competente.',''],
+  ['Admisión','El tribunal admite la demanda, previene o desecha, y manda emplazar al tercero interesado.',''],
+  ['Alegatos y amparo adhesivo','El tercero interesado puede presentar alegatos o promover amparo adhesivo para defender que subsista el fallo.','15 días'],
+  ['Estudio y proyecto','El magistrado ponente elabora el proyecto de sentencia, que se discute y vota en el órgano colegiado.',''],
+  ['Sentencia','Se concede el amparo para que la autoridad dicte una nueva resolución, se niega o se sobresee.',''],
+  ['Revisión excepcional','Procede ante la Suprema Corte solo cuando subsiste un problema de constitucionalidad de importancia y trascendencia.',''],
+  ['Cumplimiento','La autoridad responsable debe emitir la nueva resolución conforme a los lineamientos de la sentencia.','']
+ ]
+};
+const M6={built:false,cat:'Todas',
+ enter(){
+  if(!this.built){
+   this.built=true;
+   const cats=['Todas'].concat([...new Set(GLOS.map(g=>g[0]))]);
+   $('#glChips').innerHTML=cats.map(c=>'<span class="chip'+(c==='Todas'?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</span>').join('')+'<span class="chip" data-c="__k">Aprendidos</span>';
+   $('#glChips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;this.cat=c.dataset.c;$$('#glChips .chip').forEach(x=>x.classList.toggle('on',x===c));this.render();SFX.click()};
+   $('#glSearch').oninput=()=>this.render();
+   $('#glRand').onclick=()=>{const cs=$$('#glGrid .fc');if(!cs.length)return;const c=cs[rnd(cs.length)];c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.add('flip');SFX.click()};
+   $('#glGrid').onclick=e=>{
+    const k=e.target.closest('[data-k]');
+    if(k){this.toggle(+k.dataset.k,k.closest('.fc'),k);return}
+    const c=e.target.closest('.fc');if(c){c.classList.toggle('flip');SFX.click()}
+   };
+  }
+  this.render();
+ },
+ render(){
+  const q=norm($('#glSearch').value);
+  const L=GLOS.map((g,i)=>({g,i})).filter(o=>(this.cat==='Todas'||(this.cat==='__k'?S.learned.indexOf(o.i)>=0:o.g[0]===this.cat))&&(!q||norm(o.g[1]+' '+o.g[2]).includes(q)));
+  $('#glGrid').innerHTML=L.length?L.map(o=>{const kn=S.learned.indexOf(o.i)>=0;return'<div class="fc'+(kn?' known':'')+'"><div class="fci"><div class="ff"><small class="mut">'+esc(o.g[0])+'</small>'+esc(o.g[1])+'</div><div class="fb"><div>'+esc(o.g[2])+'</div><button class="btn" data-k="'+o.i+'" style="margin-top:8px;padding:5px 10px;font-size:12px">'+(kn?'✓ Aprendido':'Marcar como aprendido')+'</button></div></div></div>'}).join(''):'<div class="glass p mut">Sin resultados.</div>';
+  this.prog();
+ },
+ toggle(i,card,btn){
+  const p=S.learned.indexOf(i);
+  if(p>=0)S.learned.splice(p,1);
+  else{S.learned.push(i);if(S.learnedEver.indexOf(i)<0){S.learnedEver.push(i);save();addXP(2,'Término aprendido')}}
+  save();card.classList.toggle('known',p<0);btn.textContent=p<0?'✓ Aprendido':'Marcar como aprendido';this.prog();checkBadges();
+ },
+ prog(){$('#glProgT').textContent=S.learned.length+' / '+GLOS.length+' aprendidos';$('#glBar').style.width=(S.learned.length/GLOS.length*100)+'%'}
+};
+const M7={built:false,via:'ind',
+ enter(){
+  if(!this.built){
+   this.built=true;
+   $$('[data-v]').forEach(c=>c.onclick=()=>{this.via=c.dataset.v;$$('[data-v]').forEach(x=>x.classList.toggle('on',x===c));this.render();SFX.click()});
+   $('#prAll').onclick=()=>$$('#prList details').forEach(d=>{d.open=true});
+   $('#prNone').onclick=()=>$$('#prList details').forEach(d=>{d.open=false});
+  }
+  this.render();
+ },
+ render(){
+  $('#prList').innerHTML=STEPS[this.via].map((s,i)=>'<details class="st"'+(i===0?' open':'')+'><summary><span class="hexn" style="width:34px;height:34px;font-size:14px">'+(i+1)+'</span><span>'+esc(s[0])+'</span>'+(s[2]?'<span class="badge b-go">'+esc(s[2])+'</span>':'')+'</summary><p>'+esc(s[1])+'</p></details>').join('');
+ }
+};
+
+(function bg(){
+ const cv=$('#bg'),x=cv.getContext('2d');let W,H,P=[];
+ const rs=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;P=Array.from({length:Math.min(80,Math.floor(W*H/18000))},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,c:Math.random()<.5?'255,92,168':'91,140,255'}))};rs();addEventListener('resize',rs);
+ (function f(){requestAnimationFrame(f);x.clearRect(0,0,W,H);if(!S.fx||document.hidden)return;
+  P.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;x.fillStyle='rgba('+p.c+',.7)';x.beginPath();x.arc(p.x,p.y,1.6,0,6.283);x.fill();
+   for(let j=i+1;j<P.length;j++){const q=P[j],d=Math.hypot(p.x-q.x,p.y-q.y);if(d<110){x.strokeStyle='rgba(255,92,168,'+(.16*(1-d/110))+')';x.beginPath();x.moveTo(p.x,p.y);x.lineTo(q.x,q.y);x.stroke()}}})})();
+})();
+
+function syncToggles(){$('#sfxBtn').classList.toggle('off',!S.sfx);$('#sfxBtn i').className='fa-solid '+(S.sfx?'fa-volume-high':'fa-volume-xmark');$('#fxBtn').classList.toggle('off',!S.fx)}
+load();touchStreak();
+function setupTools(){
+ $('#hExp').onclick=()=>dl('progreso.json',JSON.stringify(S,null,1),'application/json');
+ $('#hImp').onclick=()=>$('#hFile').click();
+ $('#hFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{applyState(JSON.parse(r.result));save();location.reload()}catch(x){toast('Archivo no válido','er')}};r.readAsText(f);e.target.value=''};
+ $('#hRst').onclick=()=>{if(confirm('¿Borrar todo el progreso?')){try{localStorage.removeItem(KEY)}catch(x){}location.reload()}};
+}
+buildNav();renderStatus();renderHome();M5.init();syncToggles();setupTools();setTimeout(checkBadges,900);
+$$('.navbtn')[0].classList.add('on');
+$('#colBtn').onclick=()=>document.body.classList.toggle('collapsed');
+$('#sfxBtn').onclick=()=>{S.sfx=!S.sfx;save();syncToggles();SFX.click()};
+$('#fxBtn').onclick=()=>{S.fx=!S.fx;save();syncToggles();toast(S.fx?'Efectos visuales activados':'Efectos visuales desactivados')};
+if(innerWidth<820)document.body.classList.add('collapsed');
+</script>
+</body>
+</html>
